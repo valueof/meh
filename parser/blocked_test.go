@@ -1,13 +1,15 @@
-package parser
+package parser_test
 
 import (
 	"os"
 	"path"
 	"testing"
+
+	"github.com/valueof/mold/parser"
 )
 
 func TestParseBlocked(t *testing.T) {
-	tests := map[string][]MediumUser{
+	tests := map[string][]parser.User{
 		"blocks/blocked.html": {
 			{Username: "bob"},
 			{Username: "lelandpalmer"},
@@ -22,7 +24,7 @@ func TestParseBlocked(t *testing.T) {
 			return
 		}
 
-		blocked, err := ParseBlocked(dat)
+		blocked, err := parser.ParseBlocked(dat)
 		if err != nil {
 			t.Errorf("parse error: %v", err)
 			return

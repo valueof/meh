@@ -65,7 +65,7 @@ func main() {
 
 		switch d.Name() {
 		case "blocks":
-			users := []parser.MediumUser{}
+			users := []parser.User{}
 			walk(path.Join(root, d.Name()), logger, func(name string, dat io.Reader) {
 				part, err := parser.ParseBlocked(dat)
 				if err != nil {
@@ -75,8 +75,22 @@ func main() {
 				users = append(users, part...)
 			})
 
-			marshal("blocks", logger, parser.BlockedList{
+			marshal("blocks", logger, parser.BlockedUsers{
 				Users: users,
+			})
+		case "bookmarks":
+			posts := []parser.Post{}
+			walk(path.Join(root, d.Name()), logger, func(name string, dat io.Reader) {
+				part, err := parser.ParseBookmarks(dat)
+				if err != nil {
+					logger.Fatalf("%s: %v", name, err)
+					return
+				}
+				posts = append(posts, part...)
+			})
+
+			marshal("bookmarks", logger, parser.Bookmarks{
+				Posts: posts,
 			})
 		}
 	}
