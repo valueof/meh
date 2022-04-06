@@ -11,7 +11,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/valueof/mold/parser"
+	"github.com/valueof/meh/parser"
 )
 
 func walk(dir string, logger *log.Logger, fn func(string, io.Reader)) {
@@ -48,7 +48,7 @@ func marshal(name string, logger *log.Logger, v any) {
 func main() {
 	var (
 		buf    bytes.Buffer
-		logger = log.New(&buf, "mold: ", log.Llongfile)
+		logger = log.New(&buf, "meh: ", log.Llongfile)
 		root   = "./data"
 	)
 

@@ -1,4 +1,4 @@
-module github.com/valueof/mold
+module github.com/valueof/meh
 
 go 1.18
 

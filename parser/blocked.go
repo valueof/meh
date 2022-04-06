@@ -4,7 +4,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/valueof/mold/util"
+	"github.com/valueof/meh/util"
 	"golang.org/x/net/html"
 )
 

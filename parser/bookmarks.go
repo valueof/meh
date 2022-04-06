@@ -3,7 +3,7 @@ package parser
 import (
 	"io"
 
-	"github.com/valueof/mold/util"
+	"github.com/valueof/meh/util"
 	"golang.org/x/net/html"
 )
 

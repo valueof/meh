@@ -5,7 +5,7 @@ import (
 	"path"
 	"testing"
 
-	"github.com/valueof/mold/parser"
+	"github.com/valueof/meh/parser"
 )
 
 func TestParseBlocked(t *testing.T) {

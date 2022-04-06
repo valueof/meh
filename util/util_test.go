@@ -3,7 +3,7 @@ package util_test
 import (
 	"testing"
 
-	"github.com/valueof/mold/util"
+	"github.com/valueof/meh/util"
 )
 
 func TestParseMediumId(t *testing.T) {
