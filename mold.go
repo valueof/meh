@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -35,6 +36,15 @@ func walk(dir string, logger *log.Logger, fn func(string, io.Reader)) {
 	}
 }
 
+func marshal(name string, logger *log.Logger, v any) {
+	out, err := json.Marshal(v)
+	if err != nil {
+		logger.Fatalf("%s: %v", name, err)
+	}
+	fmt.Printf("%s: %s", name, string(out))
+	fmt.Println()
+}
+
 func main() {
 	var (
 		buf    bytes.Buffer
@@ -56,15 +66,18 @@ func main() {
 		switch d.Name() {
 		case "blocks":
 			users := []parser.MediumUser{}
-			walk(path.Join(root, d.Name()), logger, func(fn string, dat io.Reader) {
+			walk(path.Join(root, d.Name()), logger, func(name string, dat io.Reader) {
 				part, err := parser.ParseBlocked(dat)
 				if err != nil {
-					logger.Fatalf("%s: %v", fn, err)
+					logger.Fatalf("%s: %v", name, err)
 					return
 				}
 				users = append(users, part...)
 			})
-			fmt.Printf("blocks: %v\n", users)
+
+			marshal("blocks", logger, parser.BlockedList{
+				Users: users,
+			})
 		}
 	}
 

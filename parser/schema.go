@@ -1,9 +1,9 @@
 package parser
 
 type BlockedList struct {
-	Users []MediumUser
+	Users []MediumUser `json:"users"`
 }
 
 type MediumUser struct {
-	Username string
+	Username string `json:"username"`
 }
