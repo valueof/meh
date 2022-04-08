@@ -92,6 +92,20 @@ func main() {
 			marshal("bookmarks", logger, parser.Bookmarks{
 				Posts: posts,
 			})
+		case "claps":
+			claps := []parser.Clap{}
+			walk(path.Join(root, d.Name()), logger, func(name string, dat io.Reader) {
+				part, err := parser.ParseClaps(dat)
+				if err != nil {
+					logger.Fatalf("%s: %v", name, err)
+					return
+				}
+				claps = append(claps, part...)
+			})
+
+			marshal("claps", logger, parser.Claps{
+				Claps: claps,
+			})
 		}
 	}
 
