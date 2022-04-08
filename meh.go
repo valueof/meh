@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -36,13 +35,16 @@ func walk(dir string, logger *log.Logger, fn func(string, io.Reader)) {
 	}
 }
 
-func marshal(name string, logger *log.Logger, v any) {
-	out, err := json.Marshal(v)
+func write(name string, logger *log.Logger, v any) {
+	out, err := json.MarshalIndent(v, "", "  ")
 	if err != nil {
 		logger.Fatalf("%s: %v", name, err)
 	}
-	fmt.Printf("%s: %s", name, string(out))
-	fmt.Println()
+
+	err = os.WriteFile("./out/"+name+".json", out, 0644)
+	if err != nil {
+		logger.Fatalf("%s: %v", name, err)
+	}
 }
 
 func main() {
@@ -75,7 +77,7 @@ func main() {
 				users = append(users, part...)
 			})
 
-			marshal("blocks", logger, parser.BlockedUsers{
+			write("blocks", logger, parser.BlockedUsers{
 				Users: users,
 			})
 		case "bookmarks":
@@ -89,7 +91,7 @@ func main() {
 				posts = append(posts, part...)
 			})
 
-			marshal("bookmarks", logger, parser.Bookmarks{
+			write("bookmarks", logger, parser.Bookmarks{
 				Posts: posts,
 			})
 		case "claps":
@@ -103,7 +105,7 @@ func main() {
 				claps = append(claps, part...)
 			})
 
-			marshal("claps", logger, parser.Claps{
+			write("claps", logger, parser.Claps{
 				Claps: claps,
 			})
 		}
