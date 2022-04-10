@@ -21,3 +21,19 @@ func TestParseMediumId(t *testing.T) {
 		}
 	}
 }
+
+func TestParseMediumUsername(t *testing.T) {
+	tests := map[string]string{
+		"https://anton.medium.com/":      "anton",
+		"https://medium.com/@anton":      "anton",
+		"https://medium.com":             "",
+		"https://anton.medium.com/about": "anton",
+	}
+
+	for url, want := range tests {
+		have := util.ParseMediumUsername(url)
+		if want != have {
+			t.Errorf("url: %s; want: %s; have: %s", url, want, have)
+		}
+	}
+}

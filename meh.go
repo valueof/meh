@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -108,8 +109,46 @@ func main() {
 			write("claps", logger, parser.Claps{
 				Claps: claps,
 			})
+		case "interests":
+			interests := parser.Interests{}
+			walk(path.Join(root, d.Name()), logger, func(name string, dat io.Reader) {
+				switch name {
+				case "publications.html":
+					pubs, err := parser.ParseInterestsPublications(dat)
+					if err != nil {
+						logger.Fatalf("%s: %v", name, err)
+						return
+					}
+					interests.Publications = pubs
+				case "tags.html":
+					tags, err := parser.ParseInterestsTags(dat)
+					if err != nil {
+						logger.Fatalf("%s: %v", name, err)
+						return
+					}
+					interests.Tags = tags
+				case "topics.html":
+					topics, err := parser.ParseInterestsTopics(dat)
+					if err != nil {
+						logger.Fatalf("%s: %v", name, err)
+						return
+					}
+					interests.Topics = topics
+				case "writers.html":
+					writers, err := parser.ParseInterestsWriters(dat)
+					if err != nil {
+						logger.Fatalf("%s: %v", name, err)
+						return
+					}
+					interests.Writers = writers
+				default:
+					logger.Printf("Unknown interests file: %s", name)
+				}
+			})
+
+			write("interests", logger, interests)
 		}
 	}
 
-	// fmt.Print(&buf)
+	fmt.Print(&buf)
 }

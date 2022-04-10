@@ -17,6 +17,13 @@ type Claps struct {
 	Claps []Clap `json:"claps"`
 }
 
+type Interests struct {
+	Publications []Publication `json:"publications"`
+	Tags         []Tag         `json:"tags"`
+	Topics       []Topic       `json:"topics"`
+	Writers      []User        `json:"writers"`
+}
+
 type Post struct {
 	Id          string `json:"id"`
 	Url         string `json:"url"`
@@ -24,6 +31,23 @@ type Post struct {
 	PublishedAt string `json:"publishedAt"`
 }
 
+type Publication struct {
+	Name string `json:"name"`
+	Url  string `json:"url"`
+}
+
+type Tag struct {
+	Name string `json:"name"`
+	Url  string `json:"url"`
+}
+
+type Topic struct {
+	Name string `json:"name"`
+	Url  string `json:"url"`
+}
+
 type User struct {
+	Name     string `json:"name"`
 	Username string `json:"username"`
+	Url      string `json:"url"`
 }
