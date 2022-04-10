@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -14,7 +15,12 @@ import (
 	"github.com/valueof/meh/parser"
 )
 
+var input *string
+var output *string
+var verbose *bool
+
 func walk(dir string, logger *log.Logger, fn func(string, io.Reader)) {
+	dir = path.Join(*input, dir)
 	files, err := ioutil.ReadDir(dir)
 	if err != nil {
 		logger.Fatalf("%s: %v\n", path.Base(dir), err)
@@ -42,7 +48,8 @@ func write(name string, logger *log.Logger, v any) {
 		logger.Fatalf("%s: %v", name, err)
 	}
 
-	err = os.WriteFile("./out/"+name+".json", out, 0644)
+	dir := path.Join(*output, name+".json")
+	err = os.WriteFile(dir, out, 0644)
 	if err != nil {
 		logger.Fatalf("%s: %v", name, err)
 	}
@@ -52,10 +59,19 @@ func main() {
 	var (
 		buf    bytes.Buffer
 		logger = log.New(&buf, "meh: ", log.Llongfile)
-		root   = "./data"
 	)
 
-	dirs, err := ioutil.ReadDir(root)
+	input = flag.String("in", "", "path to the (uncompressed) medium archive")
+	output = flag.String("out", "", "output directory")
+	verbose = flag.Bool("verbose", false, "whether to print logs to stdout")
+	flag.Parse()
+
+	if *input == "" || *output == "" {
+		flag.Usage()
+		return
+	}
+
+	dirs, err := ioutil.ReadDir(*input)
 	if err != nil {
 		panic(err)
 	}
@@ -69,7 +85,7 @@ func main() {
 		switch d.Name() {
 		case "blocks":
 			users := []parser.User{}
-			walk(path.Join(root, d.Name()), logger, func(name string, dat io.Reader) {
+			walk(d.Name(), logger, func(name string, dat io.Reader) {
 				part, err := parser.ParseBlocked(dat)
 				if err != nil {
 					logger.Fatalf("%s: %v", name, err)
@@ -83,7 +99,7 @@ func main() {
 			})
 		case "bookmarks":
 			posts := []parser.Post{}
-			walk(path.Join(root, d.Name()), logger, func(name string, dat io.Reader) {
+			walk(d.Name(), logger, func(name string, dat io.Reader) {
 				part, err := parser.ParseBookmarks(dat)
 				if err != nil {
 					logger.Fatalf("%s: %v", name, err)
@@ -97,7 +113,7 @@ func main() {
 			})
 		case "claps":
 			claps := []parser.Clap{}
-			walk(path.Join(root, d.Name()), logger, func(name string, dat io.Reader) {
+			walk(d.Name(), logger, func(name string, dat io.Reader) {
 				part, err := parser.ParseClaps(dat)
 				if err != nil {
 					logger.Fatalf("%s: %v", name, err)
@@ -111,7 +127,7 @@ func main() {
 			})
 		case "interests":
 			interests := parser.Interests{}
-			walk(path.Join(root, d.Name()), logger, func(name string, dat io.Reader) {
+			walk(d.Name(), logger, func(name string, dat io.Reader) {
 				switch name {
 				case "publications.html":
 					pubs, err := parser.ParseInterestsPublications(dat)
@@ -149,7 +165,7 @@ func main() {
 			write("interests", logger, interests)
 		case "ips":
 			ips := []parser.IP{}
-			walk(path.Join(root, d.Name()), logger, func(name string, dat io.Reader) {
+			walk(d.Name(), logger, func(name string, dat io.Reader) {
 				part, err := parser.ParseIps(dat)
 				if err != nil {
 					logger.Fatalf("%s: %v", name, err)
@@ -161,8 +177,12 @@ func main() {
 			write("ips", logger, parser.IPs{
 				IPs: ips,
 			})
+		default:
+			logger.Printf("skipped %s: not supported", d.Name())
 		}
 	}
 
-	fmt.Print(&buf)
+	if *verbose == true {
+		fmt.Print(&buf)
+	}
 }
