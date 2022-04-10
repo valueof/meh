@@ -24,6 +24,15 @@ type Interests struct {
 	Writers      []User        `json:"writers"`
 }
 
+type IP struct {
+	Address   string `json:"address"`
+	CreatedAt string `json:"createdAt"`
+}
+
+type IPs struct {
+	IPs []IP `json:"ips"`
+}
+
 type Post struct {
 	Id          string `json:"id"`
 	Url         string `json:"url"`

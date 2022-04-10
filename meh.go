@@ -147,6 +147,20 @@ func main() {
 			})
 
 			write("interests", logger, interests)
+		case "ips":
+			ips := []parser.IP{}
+			walk(path.Join(root, d.Name()), logger, func(name string, dat io.Reader) {
+				part, err := parser.ParseIps(dat)
+				if err != nil {
+					logger.Fatalf("%s: %v", name, err)
+					return
+				}
+				ips = append(ips, part...)
+			})
+
+			write("ips", logger, parser.IPs{
+				IPs: ips,
+			})
 		}
 	}
 
