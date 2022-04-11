@@ -77,6 +77,21 @@ func GetNodeAttr(n *html.Node, key string) string {
 	return ""
 }
 
-func IsListItem(n *html.Node) bool {
-	return n.Type == html.ElementNode && n.Data == "li"
+func IsElement(n *html.Node, name string) bool {
+	return n.Type == html.ElementNode && n.Data == name
+}
+
+func HasClass(n *html.Node, name string) bool {
+	if n.Type != html.ElementNode {
+		return false
+	}
+
+	classes := strings.Split(GetNodeAttr(n, "class"), " ")
+	for _, c := range classes {
+		if c == name {
+			return true
+		}
+	}
+
+	return false
 }

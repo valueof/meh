@@ -19,7 +19,7 @@ func ParseIps(dat io.Reader) ([]IP, error) {
 
 	var f func(*html.Node)
 	f = func(n *html.Node) {
-		if util.IsListItem(n) {
+		if util.IsElement(n, "li") {
 			ip := IP{}
 			for t := n.FirstChild; t != nil; t = t.NextSibling {
 				if t.Type != html.TextNode {

@@ -1,5 +1,25 @@
 package parser
 
+type MarkupType string
+type GrafType string
+
+const (
+	A      MarkupType = "a"
+	EM     MarkupType = "em"
+	STRONG MarkupType = "strong"
+)
+
+const (
+	H1         GrafType = "h1"
+	H2         GrafType = "h2"
+	H3         GrafType = "h2"
+	H4         GrafType = "h2"
+	IMG        GrafType = "img"
+	P          GrafType = "p"
+	HR         GrafType = "hr"
+	BLOCKQUOTE GrafType = "bq"
+)
+
 type BlockedUsers struct {
 	Users []User `json:"users"`
 }
@@ -15,6 +35,13 @@ type Clap struct {
 
 type Claps struct {
 	Claps []Clap `json:"claps"`
+}
+
+type Graf struct {
+	Type    GrafType `json:"type"`
+	Name    string   `json:"name"`
+	Text    string   `json:"text"`
+	Markups []Markup `json:"markups"`
 }
 
 type Interests struct {
@@ -33,16 +60,29 @@ type IPs struct {
 	IPs []IP `json:"ips"`
 }
 
+type Markup struct {
+	Type  MarkupType `json:"type"`
+	Start int        `json:"start"`
+	End   int        `json:"end"`
+	Href  string     `json:"href"`
+}
+
 type Post struct {
-	Id          string `json:"id"`
-	Url         string `json:"url"`
-	Title       string `json:"title"`
-	PublishedAt string `json:"publishedAt"`
+	Id          string    `json:"id"`
+	Url         string    `json:"url"`
+	Title       string    `json:"title"`
+	PublishedAt string    `json:"publishedAt"`
+	Content     []Section `json:"content"`
 }
 
 type Publication struct {
 	Name string `json:"name"`
 	Url  string `json:"url"`
+}
+
+type Section struct {
+	Name string `json:"name"`
+	Body []Graf `json:"body"`
 }
 
 type Tag struct {

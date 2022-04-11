@@ -42,16 +42,22 @@ func walk(dir string, logger *log.Logger, fn func(string, io.Reader)) {
 	}
 }
 
-func write(name string, logger *log.Logger, v any) {
+func write(fp string, logger *log.Logger, v any) {
 	out, err := json.MarshalIndent(v, "", "  ")
 	if err != nil {
-		logger.Fatalf("%s: %v", name, err)
+		logger.Fatalf("%s: %v", fp, err)
 	}
 
-	dir := path.Join(*output, name+".json")
-	err = os.WriteFile(dir, out, 0644)
+	// Make sure all directories exist to host this file
+	dir := path.Dir(path.Join(*output, fp))
+	err = os.MkdirAll(dir, os.ModePerm)
 	if err != nil {
-		logger.Fatalf("%s: %v", name, err)
+		logger.Fatalf("%s: %v", dir, err)
+	}
+
+	err = os.WriteFile(path.Join(*output, fp), out, 0644)
+	if err != nil {
+		logger.Fatalf("%s: %v", fp, err)
 	}
 }
 
@@ -94,7 +100,7 @@ func main() {
 				users = append(users, part...)
 			})
 
-			write("blocks", logger, parser.BlockedUsers{
+			write("blocks.json", logger, parser.BlockedUsers{
 				Users: users,
 			})
 		case "bookmarks":
@@ -108,7 +114,7 @@ func main() {
 				posts = append(posts, part...)
 			})
 
-			write("bookmarks", logger, parser.Bookmarks{
+			write("bookmarks.json", logger, parser.Bookmarks{
 				Posts: posts,
 			})
 		case "claps":
@@ -122,7 +128,7 @@ func main() {
 				claps = append(claps, part...)
 			})
 
-			write("claps", logger, parser.Claps{
+			write("claps.json", logger, parser.Claps{
 				Claps: claps,
 			})
 		case "interests":
@@ -162,7 +168,7 @@ func main() {
 				}
 			})
 
-			write("interests", logger, interests)
+			write("interests.json", logger, interests)
 		case "ips":
 			ips := []parser.IP{}
 			walk(d.Name(), logger, func(name string, dat io.Reader) {
@@ -174,9 +180,23 @@ func main() {
 				ips = append(ips, part...)
 			})
 
-			write("ips", logger, parser.IPs{
+			write("ips.json", logger, parser.IPs{
 				IPs: ips,
 			})
+		case "posts":
+			posts := map[string]parser.Post{}
+			walk(d.Name(), logger, func(name string, dat io.Reader) {
+				post, err := parser.ParsePost(dat)
+				if err != nil {
+					logger.Fatalf("%s: %v", name, err)
+					return
+				}
+				posts[strings.TrimSuffix(name, ".html")] = *post
+			})
+
+			for name, post := range posts {
+				write(path.Join("posts", name+".json"), logger, post)
+			}
 		default:
 			logger.Printf("skipped %s: not supported", d.Name())
 		}

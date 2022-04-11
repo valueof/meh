@@ -25,7 +25,7 @@ func ParseInterestsPublications(dat io.Reader) ([]Publication, error) {
 
 	var f func(*html.Node)
 	f = func(n *html.Node) {
-		if util.IsListItem(n) {
+		if util.IsElement(n, "li") {
 			p := Publication{}
 			walkLinks(n, func(href string, text string) {
 				p.Url = href
@@ -54,7 +54,7 @@ func ParseInterestsTags(dat io.Reader) ([]Tag, error) {
 
 	var f func(*html.Node)
 	f = func(n *html.Node) {
-		if util.IsListItem(n) {
+		if util.IsElement(n, "li") {
 			t := Tag{}
 			walkLinks(n, func(href string, text string) {
 				t.Url = href
@@ -83,7 +83,7 @@ func ParseInterestsTopics(dat io.Reader) ([]Topic, error) {
 
 	var f func(*html.Node)
 	f = func(n *html.Node) {
-		if util.IsListItem(n) {
+		if util.IsElement(n, "li") {
 			t := Topic{}
 			walkLinks(n, func(href string, text string) {
 				t.Url = href
@@ -112,7 +112,7 @@ func ParseInterestsWriters(dat io.Reader) ([]User, error) {
 
 	var f func(*html.Node)
 	f = func(n *html.Node) {
-		if util.IsListItem(n) {
+		if util.IsElement(n, "li") {
 			u := User{}
 			walkLinks(n, func(href string, text string) {
 				u.Url = href
