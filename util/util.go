@@ -67,6 +67,29 @@ func GetNodeText(n *html.Node) string {
 	return strings.TrimSpace(out)
 }
 
+func GetNodeAllText(n *html.Node) string {
+	s := []string{}
+
+	var f func(*html.Node)
+	f = func(n *html.Node) {
+		if n.Type == html.TextNode {
+			s = append(s, n.Data)
+		}
+
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			f(c)
+		}
+	}
+
+	f(n)
+
+	out := strings.Join(s, "")
+	re := regexp.MustCompile(`\s+`)
+	out = re.ReplaceAllString(out, " ")
+
+	return strings.TrimSpace(out)
+}
+
 func GetNodeAttr(n *html.Node, key string) string {
 	for _, attr := range n.Attr {
 		if attr.Key == key {

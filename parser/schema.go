@@ -44,6 +44,11 @@ type Graf struct {
 	Markups []Markup `json:"markups"`
 }
 
+type InnerSection struct {
+	Classes []string `json:"classes"`
+	Body    []Graf   `json:"body"`
+}
+
 type Interests struct {
 	Publications []Publication `json:"publications"`
 	Tags         []Tag         `json:"tags"`
@@ -81,8 +86,8 @@ type Publication struct {
 }
 
 type Section struct {
-	Name string `json:"name"`
-	Body []Graf `json:"body"`
+	Name string         `json:"name"`
+	Body []InnerSection `json:"body"`
 }
 
 type Tag struct {
