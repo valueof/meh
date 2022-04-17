@@ -8,16 +8,16 @@ import (
 )
 
 func ParseBookmarks(dat io.Reader) ([]Post, error) {
-	doc, err := html.Parse(dat)
+	doc, err := util.NewNodeFromHTML(dat)
 	if err != nil {
 		return nil, err
 	}
 
 	bookmarks := []Post{}
 
-	var f func(*html.Node)
-	f = func(n *html.Node) {
-		if n.Type == html.ElementNode && n.Data == "li" {
+	var f func(*util.Node)
+	f = func(n *util.Node) {
+		if n.IsElement("li") {
 			p := Post{}
 			for t := n.FirstChild; t != nil; t = t.NextSibling {
 				if t.Type != html.ElementNode {
@@ -25,12 +25,12 @@ func ParseBookmarks(dat io.Reader) ([]Post, error) {
 				}
 
 				switch {
-				case t.Data == "a" && util.GetNodeAttr(t, "class") == "h-cite":
-					p.Url = util.GetNodeAttr(t, "href")
+				case t.Data == "a" && t.Attrs["class"] == "h-cite":
+					p.Url = t.Attrs["href"]
 					p.Id = util.ParseMediumId(p.Url)
-					p.Title = util.GetNodeText(t)
-				case t.Data == "time" && util.GetNodeAttr(t, "class") == "dt-published":
-					p.PublishedAt = util.GetNodeText(t)
+					p.Title = t.Text()
+				case t.Data == "time" && t.Attrs["class"] == "dt-published":
+					p.PublishedAt = t.Text()
 				}
 			}
 			bookmarks = append(bookmarks, p)

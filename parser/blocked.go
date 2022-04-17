@@ -10,27 +10,19 @@ import (
 
 // ParseBlocked parses the blocked-users HTML file
 func ParseBlocked(dat io.Reader) ([]User, error) {
-	doc, err := html.Parse(dat)
+	node, err := util.NewNodeFromHTML(dat)
 	if err != nil {
 		return nil, err
 	}
 
 	users := []User{}
-
-	var f func(*html.Node)
-	f = func(n *html.Node) {
-		if n.Type == html.ElementNode && n.Data == "a" && util.GetNodeAttr(n, "class") == "h-cite" {
+	node.Walk(func(n *util.Node) {
+		if n.Type == html.ElementNode && n.Data == "a" && n.Attrs["class"] == "h-cite" {
 			users = append(users, User{
-				Username: strings.TrimPrefix(util.GetNodeText(n), "@"),
+				Username: strings.TrimPrefix(n.Text(), "@"),
 			})
-			return
 		}
+	})
 
-		for c := n.FirstChild; c != nil; c = c.NextSibling {
-			f(c)
-		}
-	}
-
-	f(doc)
 	return users, nil
 }

@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/valueof/meh/util"
-	"golang.org/x/net/html"
 )
 
 func TestParseMediumId(t *testing.T) {
@@ -40,20 +39,19 @@ func TestParseMediumUsername(t *testing.T) {
 	}
 }
 
-func TestGetNodeAllText(t *testing.T) {
+func TestText(t *testing.T) {
 	tests := map[string]string{
 		`<p>The <em>owls</em> are not what <strong><em>they seem</em></strong></p>`: "The owls are not what they seem",
 	}
 
 	for src, want := range tests {
-		dat := strings.NewReader(src)
-		node, err := html.Parse(dat)
+		node, err := util.NewNodeFromHTML(strings.NewReader(src))
 		if err != nil {
 			t.Errorf("%v", err)
 			continue
 		}
 
-		have := util.GetNodeAllText(node)
+		have := node.Text()
 		if have != want {
 			t.Errorf("want: %s; have: %s", want, have)
 		}

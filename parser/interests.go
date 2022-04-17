@@ -4,130 +4,109 @@ import (
 	"io"
 
 	"github.com/valueof/meh/util"
-	"golang.org/x/net/html"
 )
 
-func walkLinks(n *html.Node, f func(string, string)) {
+func walkLinks(n *util.Node, f func(string, string)) {
 	for t := n.FirstChild; t != nil; t = t.NextSibling {
-		if t.Type == html.ElementNode && t.Data == "a" {
-			f(util.GetNodeAttr(t, "href"), util.GetNodeText(t))
+		if t.IsElement("a") {
+			f(t.Attrs["href"], t.Text())
 		}
 	}
 }
 
 func ParseInterestsPublications(dat io.Reader) ([]Publication, error) {
-	doc, err := html.Parse(dat)
+	node, err := util.NewNodeFromHTML(dat)
 	if err != nil {
 		return nil, err
 	}
 
 	pubs := []Publication{}
 
-	var f func(*html.Node)
-	f = func(n *html.Node) {
-		if util.IsElement(n, "li") {
-			p := Publication{}
-			walkLinks(n, func(href string, text string) {
-				p.Url = href
-				p.Name = text
-			})
-			pubs = append(pubs, p)
+	node.Walk(func(n *util.Node) {
+		if n.IsElement("li") == false {
 			return
 		}
 
-		for c := n.FirstChild; c != nil; c = c.NextSibling {
-			f(c)
-		}
-	}
+		p := Publication{}
+		walkLinks(n, func(href string, text string) {
+			p.Url = href
+			p.Name = text
+		})
+		pubs = append(pubs, p)
+	})
 
-	f(doc)
 	return pubs, nil
 }
 
 func ParseInterestsTags(dat io.Reader) ([]Tag, error) {
-	doc, err := html.Parse(dat)
+	node, err := util.NewNodeFromHTML(dat)
 	if err != nil {
 		return nil, err
 	}
 
 	tags := []Tag{}
 
-	var f func(*html.Node)
-	f = func(n *html.Node) {
-		if util.IsElement(n, "li") {
-			t := Tag{}
-			walkLinks(n, func(href string, text string) {
-				t.Url = href
-				t.Name = text
-			})
-			tags = append(tags, t)
+	node.Walk(func(n *util.Node) {
+		if n.IsElement("li") == false {
 			return
 		}
 
-		for c := n.FirstChild; c != nil; c = c.NextSibling {
-			f(c)
-		}
-	}
+		t := Tag{}
+		walkLinks(n, func(href string, text string) {
+			t.Url = href
+			t.Name = text
+		})
+		tags = append(tags, t)
+	})
 
-	f(doc)
 	return tags, nil
 }
 
 func ParseInterestsTopics(dat io.Reader) ([]Topic, error) {
-	doc, err := html.Parse(dat)
+	node, err := util.NewNodeFromHTML(dat)
 	if err != nil {
 		return nil, err
 	}
 
 	topics := []Topic{}
 
-	var f func(*html.Node)
-	f = func(n *html.Node) {
-		if util.IsElement(n, "li") {
-			t := Topic{}
-			walkLinks(n, func(href string, text string) {
-				t.Url = href
-				t.Name = text
-			})
-			topics = append(topics, t)
+	node.Walk(func(n *util.Node) {
+		if n.IsElement("li") == false {
 			return
 		}
 
-		for c := n.FirstChild; c != nil; c = c.NextSibling {
-			f(c)
-		}
-	}
+		t := Topic{}
+		walkLinks(n, func(href string, text string) {
+			t.Url = href
+			t.Name = text
+		})
+		topics = append(topics, t)
+	})
 
-	f(doc)
 	return topics, nil
 }
 
 func ParseInterestsWriters(dat io.Reader) ([]User, error) {
-	doc, err := html.Parse(dat)
+	node, err := util.NewNodeFromHTML(dat)
 	if err != nil {
 		return nil, err
 	}
 
 	users := []User{}
 
-	var f func(*html.Node)
-	f = func(n *html.Node) {
-		if util.IsElement(n, "li") {
-			u := User{}
-			walkLinks(n, func(href string, text string) {
-				u.Url = href
-				u.Name = text
-				u.Username = util.ParseMediumUsername(href)
-			})
-			users = append(users, u)
+	node.Walk(func(n *util.Node) {
+		if n.IsElement("li") == false {
 			return
 		}
 
-		for c := n.FirstChild; c != nil; c = c.NextSibling {
-			f(c)
-		}
-	}
+		u := User{}
+		walkLinks(n, func(href string, text string) {
+			u.Url = href
+			u.Name = text
+			u.Username = util.ParseMediumUsername(href)
+		})
+		users = append(users, u)
+	})
 
-	f(doc)
 	return users, nil
 }

@@ -1,6 +1,7 @@
 package util
 
 import (
+	"io"
 	"net/url"
 	"regexp"
 	"strings"
@@ -8,8 +9,8 @@ import (
 	"golang.org/x/net/html"
 )
 
-// ParseMediumId Parses post ID out of a Medium URL. Links to all Medium
-// posts end with a unique value that represents its ID:
+// ParseMediumId Parses post ID out of a Medium URL. Links to all Medium posts end with a unique
+// value that represents its ID:
 // 	https://medium.com/p/my-slug-5940ded906e7 -> 5940ded906e7
 func ParseMediumId(s string) string {
 	url, err := url.Parse(s)
@@ -26,13 +27,11 @@ func ParseMediumId(s string) string {
 	return ""
 }
 
-// ParseMediumUsername Parses username out of a Medium URL. For now it
-// only supports medium.com/@username and username.medium.com.
+// ParseMediumUsername Parses username out of a Medium URL. For now it only supports
+// medium.com/@username and username.medium.com.
 //
-// Caveat: sometimes username.medium.com is not username at all
-// but we will ignore this fact for now. If you think this is confusing
-// ask someone from Medium about difference between publications, collections,
-// and catalogs and watch them weep.
+// Caveat: sometimes username.medium.com is not username at all but we will ignore this
+// fact for now.
 func ParseMediumUsername(s string) string {
 	url, err := url.Parse(s)
 	if err != nil {
@@ -52,29 +51,49 @@ func ParseMediumUsername(s string) string {
 	return ""
 }
 
-func GetNodeText(n *html.Node) string {
-	s := []string{}
-
-	for t := n.FirstChild; t != nil; t = t.NextSibling {
-		if t.Type == html.TextNode {
-			s = append(s, t.Data)
-		}
-	}
-
-	out := strings.Join(s, "")
-	re := regexp.MustCompile(`\s+`)
-	out = re.ReplaceAllString(out, " ")
-	return strings.TrimSpace(out)
+type Node struct {
+	*html.Node
+	FirstChild  *Node
+	NextSibling *Node
+	Attrs       map[string]string
 }
 
-func GetNodeAllText(n *html.Node) string {
-	s := []string{}
+func NewNodeFromHTML(dat io.Reader) (*Node, error) {
+	doc, err := html.Parse(dat)
+	if err != nil {
+		return nil, err
+	}
 
-	var f func(*html.Node)
-	f = func(n *html.Node) {
-		if n.Type == html.TextNode {
-			s = append(s, n.Data)
-		}
+	return NewNode(doc), nil
+}
+
+func NewNode(n *html.Node) *Node {
+	node := Node{
+		Node:        n,
+		FirstChild:  nil,
+		NextSibling: nil,
+		Attrs:       map[string]string{},
+	}
+
+	if n.FirstChild != nil {
+		node.FirstChild = NewNode(n.FirstChild)
+	}
+
+	if n.NextSibling != nil {
+		node.NextSibling = NewNode(n.NextSibling)
+	}
+
+	for _, a := range n.Attr {
+		node.Attrs[a.Key] = a.Val
+	}
+
+	return &node
+}
+
+func (n *Node) Walk(cb func(*Node)) {
+	var f func(*Node)
+	f = func(n *Node) {
+		cb(n)
 
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			f(c)
@@ -82,6 +101,16 @@ func GetNodeAllText(n *html.Node) string {
 	}
 
 	f(n)
+}
+
+func (n *Node) Text() string {
+	s := []string{}
+
+	n.Walk(func(t *Node) {
+		if t.Type == html.TextNode {
+			s = append(s, t.Data)
+		}
+	})
 
 	out := strings.Join(s, "")
 	re := regexp.MustCompile(`\s+`)
@@ -90,26 +119,16 @@ func GetNodeAllText(n *html.Node) string {
 	return strings.TrimSpace(out)
 }
 
-func GetNodeAttr(n *html.Node, key string) string {
-	for _, attr := range n.Attr {
-		if attr.Key == key {
-			return attr.Val
-		}
-	}
-
-	return ""
-}
-
-func IsElement(n *html.Node, name string) bool {
+func (n *Node) IsElement(name string) bool {
 	return n.Type == html.ElementNode && n.Data == name
 }
 
-func HasClass(n *html.Node, name string) bool {
+func (n *Node) HasClass(name string) bool {
 	if n.Type != html.ElementNode {
 		return false
 	}
 
-	classes := strings.Split(GetNodeAttr(n, "class"), " ")
+	classes := strings.Split(n.Attrs["class"], " ")
 	for _, c := range classes {
 		if c == name {
 			return true

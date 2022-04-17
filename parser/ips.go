@@ -10,42 +10,38 @@ import (
 )
 
 func ParseIps(dat io.Reader) ([]IP, error) {
-	doc, err := html.Parse(dat)
+	node, err := util.NewNodeFromHTML(dat)
 	if err != nil {
 		return nil, err
 	}
 
 	ips := []IP{}
 
-	var f func(*html.Node)
-	f = func(n *html.Node) {
-		if util.IsElement(n, "li") {
-			ip := IP{}
-			for t := n.FirstChild; t != nil; t = t.NextSibling {
-				if t.Type != html.TextNode {
-					continue
-				}
-
-				switch {
-				case strings.HasPrefix(t.Data, "IP:"):
-					s := net.ParseIP(strings.TrimSpace(strings.TrimPrefix(t.Data, "IP:")))
-					if s != nil {
-						ip.Address = s.String()
-					}
-				case strings.HasPrefix(t.Data, "Created at:"):
-					ip.CreatedAt = strings.TrimSpace(strings.TrimPrefix(t.Data, "Created at:"))
-				}
-			}
-			if ip.Address != "" {
-				ips = append(ips, ip)
-			}
+	node.Walk(func(n *util.Node) {
+		if n.IsElement("li") == false {
+			return
 		}
 
-		for c := n.FirstChild; c != nil; c = c.NextSibling {
-			f(c)
-		}
-	}
+		ip := IP{}
+		for t := n.FirstChild; t != nil; t = t.NextSibling {
+			if t.Type != html.TextNode {
+				continue
+			}
 
-	f(doc)
+			switch {
+			case strings.HasPrefix(t.Data, "IP:"):
+				s := net.ParseIP(strings.TrimSpace(strings.TrimPrefix(t.Data, "IP:")))
+				if s != nil {
+					ip.Address = s.String()
+				}
+			case strings.HasPrefix(t.Data, "Created at:"):
+				ip.CreatedAt = strings.TrimSpace(strings.TrimPrefix(t.Data, "Created at:"))
+			}
+		}
+		if ip.Address != "" {
+			ips = append(ips, ip)
+		}
+	})
+
 	return ips, nil
 }
