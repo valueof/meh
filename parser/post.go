@@ -27,16 +27,53 @@ func parseGrafs(body *util.Node) []Graf {
 			continue
 		}
 
-		graf := Graf{
-			Name: g.Attrs["name"],
-			Type: GrafType(g.Data),
-			Text: g.Text(),
+		graf := Graf{Name: g.Attrs["name"]}
+
+		// TODO(anton):
+		// 	graf--pullquote
+		//	graf--pre
+		//	graf--sectionCaption
+		//	markups
+
+		switch {
+		case g.HasClass("graf--h1"):
+		case g.HasClass("graf--h2"):
+		case g.HasClass("graf--h3"):
+		case g.HasClass("graf--h4"):
+		case g.HasClass("graf--blockquote"):
+		case g.HasClass("graf--p"):
+			graf.Type = GrafType(g.Data)
+			graf.Text = g.Text()
+		case g.HasClass("graf--figure"):
+			graf.Type = IMG
+			graf.Image = extractImage(g)
+		case g.HasClass("graf--mixtapeEmbed"):
+			graf.Type = EMBED
+			graf.Text = g.Text()
+			// TODO(anton): Better support for mixtapes
 		}
 
 		grafs = append(grafs, graf)
 	}
 
 	return grafs
+}
+
+func extractImage(n *util.Node) (img *Image) {
+	for c := n.FirstChild; c != nil; c = c.NextSibling {
+		if c.IsElement("img") == false {
+			continue
+		}
+
+		return &Image{
+			Name:   c.Attrs["data-image-id"],
+			Width:  c.Attrs["data-width"],
+			Height: c.Attrs["data-height"],
+			Source: c.Attrs["src"],
+		}
+	}
+
+	return nil
 }
 
 func parseInnerSections(body *util.Node) []InnerSection {

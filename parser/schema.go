@@ -12,12 +12,13 @@ const (
 const (
 	H1         GrafType = "h1"
 	H2         GrafType = "h2"
-	H3         GrafType = "h2"
-	H4         GrafType = "h2"
+	H3         GrafType = "h3"
+	H4         GrafType = "h4"
 	IMG        GrafType = "img"
 	P          GrafType = "p"
 	HR         GrafType = "hr"
 	BLOCKQUOTE GrafType = "bq"
+	EMBED      GrafType = "embed"
 )
 
 type BlockedUsers struct {
@@ -40,8 +41,17 @@ type Claps struct {
 type Graf struct {
 	Type    GrafType `json:"type"`
 	Name    string   `json:"name"`
-	Text    string   `json:"text"`
+	Text    string   `json:"text,omitempty"`
+	Image   *Image   `json:"image,omitempty"`
 	Markups []Markup `json:"markups"`
+}
+
+type Image struct {
+	Name   string `json:"name"`
+	Source string `json:"source"`
+	Alt    string `json:"alt"`
+	Height string `json:"height"`
+	Width  string `json:"width"`
 }
 
 type InnerSection struct {
