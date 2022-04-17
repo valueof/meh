@@ -27,22 +27,31 @@ func parseGrafs(body *util.Node) []Graf {
 			continue
 		}
 
-		graf := Graf{Name: g.Attrs["name"]}
-
-		// TODO(anton):
-		// 	graf--pullquote
-		//	graf--pre
-		//	graf--sectionCaption
-		//	markups
+		graf := Graf{
+			Name:    g.Attrs["name"],
+			Markups: []Markup{},
+		}
 
 		switch {
 		case g.HasClass("graf--h1"):
+			graf.Type = H1
+			graf.Text = g.Text()
 		case g.HasClass("graf--h2"):
+			graf.Type = H2
+			graf.Text = g.Text()
 		case g.HasClass("graf--h3"):
+			graf.Type = H3
+			graf.Text = g.Text()
 		case g.HasClass("graf--h4"):
+			graf.Type = H4
+			graf.Text = g.Text()
 		case g.HasClass("graf--blockquote"):
+			fallthrough
+		case g.HasClass("graf--pullquote"):
+			graf.Type = BLOCKQUOTE
+			graf.Text = g.Text()
 		case g.HasClass("graf--p"):
-			graf.Type = GrafType(g.Data)
+			graf.Type = P
 			graf.Text = g.Text()
 		case g.HasClass("graf--figure"):
 			graf.Type = IMG
@@ -51,9 +60,14 @@ func parseGrafs(body *util.Node) []Graf {
 			graf.Type = EMBED
 			graf.Text = g.Text()
 			// TODO(anton): Better support for mixtapes
+		case g.HasClass("graf--pre"):
+			graf.Type = PRE
+			graf.Text = g.TextPreformatted()
 		}
 
-		grafs = append(grafs, graf)
+		if graf.Type != "" {
+			grafs = append(grafs, graf)
+		}
 	}
 
 	return grafs
@@ -82,11 +96,12 @@ func parseInnerSections(body *util.Node) []InnerSection {
 	var f func(*util.Node)
 	f = func(n *util.Node) {
 		if n.HasClass("section-inner") {
-			sub := InnerSection{
-				Classes: []string{},
-				Body:    parseGrafs(n),
+			grafs := parseGrafs(n)
+			if len(grafs) == 0 {
+				return
 			}
 
+			sub := InnerSection{Body: grafs, Classes: []string{}}
 			for _, class := range strings.Split(n.Attrs["class"], " ") {
 				if class != "section-inner" {
 					sub.Classes = append(sub.Classes, class)

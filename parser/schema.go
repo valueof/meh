@@ -19,6 +19,7 @@ const (
 	HR         GrafType = "hr"
 	BLOCKQUOTE GrafType = "bq"
 	EMBED      GrafType = "embed"
+	PRE        GrafType = "pre"
 )
 
 type BlockedUsers struct {

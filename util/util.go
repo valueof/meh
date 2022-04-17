@@ -119,6 +119,20 @@ func (n *Node) Text() string {
 	return strings.TrimSpace(out)
 }
 
+func (n *Node) TextPreformatted() string {
+	s := []string{}
+
+	n.Walk(func(t *Node) {
+		if t.Type == html.TextNode {
+			s = append(s, t.Data)
+		} else if t.IsElement("br") {
+			s = append(s, "\n")
+		}
+	})
+
+	return strings.Join(s, "")
+}
+
 func (n *Node) IsElement(name string) bool {
 	return n.Type == html.ElementNode && n.Data == name
 }
