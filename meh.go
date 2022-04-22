@@ -34,6 +34,7 @@ func walk(dir string, logger *log.Logger, fn func(string, io.Reader)) {
 		}
 
 		dat, err := os.Open(path.Join(dir, f.Name()))
+		defer dat.Close()
 		if err != nil {
 			logger.Fatalf("%s: %v", f.Name(), err)
 			continue
