@@ -7,10 +7,11 @@ import (
 	"testing"
 
 	"github.com/valueof/meh/parser"
+	"github.com/valueof/meh/schema"
 )
 
 func TestParseIPs(t *testing.T) {
-	tests := map[string][]parser.IP{
+	tests := map[string][]schema.IP{
 		"ips/ips.html": {
 			{
 				Address:   "127.0.0.1",

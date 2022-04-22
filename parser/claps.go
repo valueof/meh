@@ -5,27 +5,28 @@ import (
 	"regexp"
 	"strconv"
 
+	"github.com/valueof/meh/schema"
 	"github.com/valueof/meh/util"
 	"golang.org/x/net/html"
 )
 
 var numRe regexp.Regexp = *regexp.MustCompile(`^.*\+(\d+) —`)
 
-func ParseClaps(dat io.Reader) ([]Clap, error) {
+func ParseClaps(dat io.Reader) ([]schema.Clap, error) {
 	node, err := util.NewNodeFromHTML(dat)
 	if err != nil {
 		return nil, err
 	}
 
-	claps := []Clap{}
+	claps := []schema.Clap{}
 
-	node.Walk(func(n *util.Node) {
+	node.WalkChildren(func(n *util.Node) {
 		if n.IsElement("li") == false {
 			return
 		}
 
-		clap := Clap{}
-		post := Post{}
+		clap := schema.Clap{}
+		post := schema.Post{}
 
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			// Parse out the first part of item:

@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/valueof/meh/parser"
+	"github.com/valueof/meh/schema"
 )
 
 var input *string
@@ -90,7 +91,7 @@ func main() {
 
 		switch d.Name() {
 		case "blocks":
-			users := []parser.User{}
+			users := []schema.User{}
 			walk(d.Name(), logger, func(name string, dat io.Reader) {
 				part, err := parser.ParseBlocked(dat)
 				if err != nil {
@@ -100,11 +101,11 @@ func main() {
 				users = append(users, part...)
 			})
 
-			write("blocks.json", logger, parser.BlockedUsers{
+			write("blocks.json", logger, schema.BlockedUsers{
 				Users: users,
 			})
 		case "bookmarks":
-			posts := []parser.Post{}
+			posts := []schema.Post{}
 			walk(d.Name(), logger, func(name string, dat io.Reader) {
 				part, err := parser.ParseBookmarks(dat)
 				if err != nil {
@@ -114,11 +115,11 @@ func main() {
 				posts = append(posts, part...)
 			})
 
-			write("bookmarks.json", logger, parser.Bookmarks{
+			write("bookmarks.json", logger, schema.Bookmarks{
 				Posts: posts,
 			})
 		case "claps":
-			claps := []parser.Clap{}
+			claps := []schema.Clap{}
 			walk(d.Name(), logger, func(name string, dat io.Reader) {
 				part, err := parser.ParseClaps(dat)
 				if err != nil {
@@ -128,11 +129,11 @@ func main() {
 				claps = append(claps, part...)
 			})
 
-			write("claps.json", logger, parser.Claps{
+			write("claps.json", logger, schema.Claps{
 				Claps: claps,
 			})
 		case "interests":
-			interests := parser.Interests{}
+			interests := schema.Interests{}
 			walk(d.Name(), logger, func(name string, dat io.Reader) {
 				switch name {
 				case "publications.html":
@@ -170,7 +171,7 @@ func main() {
 
 			write("interests.json", logger, interests)
 		case "ips":
-			ips := []parser.IP{}
+			ips := []schema.IP{}
 			walk(d.Name(), logger, func(name string, dat io.Reader) {
 				part, err := parser.ParseIps(dat)
 				if err != nil {
@@ -180,11 +181,11 @@ func main() {
 				ips = append(ips, part...)
 			})
 
-			write("ips.json", logger, parser.IPs{
+			write("ips.json", logger, schema.IPs{
 				IPs: ips,
 			})
 		case "posts":
-			posts := map[string]parser.Post{}
+			posts := map[string]schema.Post{}
 			walk(d.Name(), logger, func(name string, dat io.Reader) {
 				post, err := parser.ParsePost(dat)
 				if err != nil {

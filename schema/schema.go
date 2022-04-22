@@ -1,4 +1,4 @@
-package parser
+package schema
 
 type MarkupType string
 type GrafType string
@@ -7,6 +7,7 @@ const (
 	A      MarkupType = "a"
 	EM     MarkupType = "em"
 	STRONG MarkupType = "strong"
+	BR     MarkupType = "br"
 )
 
 const (
@@ -80,7 +81,7 @@ type Markup struct {
 	Type  MarkupType `json:"type"`
 	Start int        `json:"start"`
 	End   int        `json:"end"`
-	Href  string     `json:"href"`
+	Href  string     `json:"href,omitempty"`
 }
 
 type Post struct {

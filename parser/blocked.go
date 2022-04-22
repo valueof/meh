@@ -4,21 +4,22 @@ import (
 	"io"
 	"strings"
 
+	"github.com/valueof/meh/schema"
 	"github.com/valueof/meh/util"
 	"golang.org/x/net/html"
 )
 
 // ParseBlocked parses the blocked-users HTML file
-func ParseBlocked(dat io.Reader) ([]User, error) {
+func ParseBlocked(dat io.Reader) ([]schema.User, error) {
 	node, err := util.NewNodeFromHTML(dat)
 	if err != nil {
 		return nil, err
 	}
 
-	users := []User{}
-	node.Walk(func(n *util.Node) {
+	users := []schema.User{}
+	node.WalkChildren(func(n *util.Node) {
 		if n.Type == html.ElementNode && n.Data == "a" && n.Attrs["class"] == "h-cite" {
-			users = append(users, User{
+			users = append(users, schema.User{
 				Username: strings.TrimPrefix(n.Text(), "@"),
 			})
 		}

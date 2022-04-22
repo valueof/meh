@@ -1,9 +1,11 @@
 package util_test
 
 import (
+	"reflect"
 	"strings"
 	"testing"
 
+	"github.com/valueof/meh/schema"
 	"github.com/valueof/meh/util"
 )
 
@@ -41,7 +43,15 @@ func TestParseMediumUsername(t *testing.T) {
 
 func TestText(t *testing.T) {
 	tests := map[string]string{
-		`<p>The <em>owls</em> are not what <strong><em>they seem</em></strong></p>`: "The owls are not what they seem",
+		//`<p>The <em>owls</em> are not what <strong><em>they seem</em></strong></p>`: "The owls are not what they seem",
+		`<p>
+			The <em>owls</em>
+			are not what
+			<strong>
+				<em>they seem</em>
+			</strong>
+		</p>
+		`: "The owls are not what they seem",
 	}
 
 	for src, want := range tests {
@@ -57,4 +67,38 @@ func TestText(t *testing.T) {
 		}
 	}
 
+}
+
+func TestMarkup(t *testing.T) {
+	tests := []string{
+		`<p>The <em>owls</em> are not what <strong><em>they seem</em></strong></p>`,
+		`<p>
+			The <em>owls</em>
+			are not what
+			<strong>
+				<em>they seem</em>
+			</strong>
+		</p>
+		`,
+	}
+
+	want := []schema.Markup{
+		{Type: schema.EM, Start: 4, End: 8},
+		{Type: schema.STRONG, Start: 22, End: 31},
+		{Type: schema.EM, Start: 22, End: 31},
+	}
+
+	for n, tt := range tests {
+		node, err := util.NewNodeFromHTML(strings.NewReader(tt))
+		if err != nil {
+			t.Errorf("test %d failed: %v", n, err)
+			continue
+		}
+
+		have := node.Markup()
+		if reflect.DeepEqual(have, want) == false {
+			t.Errorf("test %d failed", n)
+			t.Errorf("want: %v; have: %v", want, have)
+		}
+	}
 }

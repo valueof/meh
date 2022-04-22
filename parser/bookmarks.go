@@ -3,22 +3,23 @@ package parser
 import (
 	"io"
 
+	"github.com/valueof/meh/schema"
 	"github.com/valueof/meh/util"
 	"golang.org/x/net/html"
 )
 
-func ParseBookmarks(dat io.Reader) ([]Post, error) {
+func ParseBookmarks(dat io.Reader) ([]schema.Post, error) {
 	doc, err := util.NewNodeFromHTML(dat)
 	if err != nil {
 		return nil, err
 	}
 
-	bookmarks := []Post{}
+	bookmarks := []schema.Post{}
 
 	var f func(*util.Node)
 	f = func(n *util.Node) {
 		if n.IsElement("li") {
-			p := Post{}
+			p := schema.Post{}
 			for t := n.FirstChild; t != nil; t = t.NextSibling {
 				if t.Type != html.ElementNode {
 					continue

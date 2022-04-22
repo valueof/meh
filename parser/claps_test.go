@@ -7,14 +7,15 @@ import (
 	"testing"
 
 	"github.com/valueof/meh/parser"
+	"github.com/valueof/meh/schema"
 )
 
 func TestParseClaps(t *testing.T) {
-	tests := map[string][]parser.Clap{
+	tests := map[string][]schema.Clap{
 		"claps/claps.html": {
 			{
 				Amount: 1,
-				Post: parser.Post{
+				Post: schema.Post{
 					Id:          "9e53ca408c48",
 					Url:         "https://medium.com/p/welcome-to-medium-9e53ca408c48",
 					Title:       "Welcome to Medium",
@@ -23,7 +24,7 @@ func TestParseClaps(t *testing.T) {
 			},
 			{
 				Amount: 25,
-				Post: parser.Post{
+				Post: schema.Post{
 					Id:          "b8d43e4c204d",
 					Url:         "https://medium.com/p/re-thinking-j-school-b8d43e4c204d",
 					Title:       "Re-thinking J-school",
@@ -32,7 +33,7 @@ func TestParseClaps(t *testing.T) {
 			},
 			{
 				Amount: 50,
-				Post: parser.Post{
+				Post: schema.Post{
 					Id:          "3d26424537aa",
 					Url:         "https://medium.com/p/i-accidentally-bought-a-banksy-in-2003-3d26424537aa",
 					Title:       "I Accidentally Bought a Banksy in 2003",

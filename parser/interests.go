@@ -3,6 +3,7 @@ package parser
 import (
 	"io"
 
+	"github.com/valueof/meh/schema"
 	"github.com/valueof/meh/util"
 )
 
@@ -14,20 +15,20 @@ func walkLinks(n *util.Node, f func(string, string)) {
 	}
 }
 
-func ParseInterestsPublications(dat io.Reader) ([]Publication, error) {
+func ParseInterestsPublications(dat io.Reader) ([]schema.Publication, error) {
 	node, err := util.NewNodeFromHTML(dat)
 	if err != nil {
 		return nil, err
 	}
 
-	pubs := []Publication{}
+	pubs := []schema.Publication{}
 
-	node.Walk(func(n *util.Node) {
+	node.WalkChildren(func(n *util.Node) {
 		if n.IsElement("li") == false {
 			return
 		}
 
-		p := Publication{}
+		p := schema.Publication{}
 		walkLinks(n, func(href string, text string) {
 			p.Url = href
 			p.Name = text
@@ -38,20 +39,20 @@ func ParseInterestsPublications(dat io.Reader) ([]Publication, error) {
 	return pubs, nil
 }
 
-func ParseInterestsTags(dat io.Reader) ([]Tag, error) {
+func ParseInterestsTags(dat io.Reader) ([]schema.Tag, error) {
 	node, err := util.NewNodeFromHTML(dat)
 	if err != nil {
 		return nil, err
 	}
 
-	tags := []Tag{}
+	tags := []schema.Tag{}
 
-	node.Walk(func(n *util.Node) {
+	node.WalkChildren(func(n *util.Node) {
 		if n.IsElement("li") == false {
 			return
 		}
 
-		t := Tag{}
+		t := schema.Tag{}
 		walkLinks(n, func(href string, text string) {
 			t.Url = href
 			t.Name = text
@@ -62,20 +63,20 @@ func ParseInterestsTags(dat io.Reader) ([]Tag, error) {
 	return tags, nil
 }
 
-func ParseInterestsTopics(dat io.Reader) ([]Topic, error) {
+func ParseInterestsTopics(dat io.Reader) ([]schema.Topic, error) {
 	node, err := util.NewNodeFromHTML(dat)
 	if err != nil {
 		return nil, err
 	}
 
-	topics := []Topic{}
+	topics := []schema.Topic{}
 
-	node.Walk(func(n *util.Node) {
+	node.WalkChildren(func(n *util.Node) {
 		if n.IsElement("li") == false {
 			return
 		}
 
-		t := Topic{}
+		t := schema.Topic{}
 		walkLinks(n, func(href string, text string) {
 			t.Url = href
 			t.Name = text
@@ -86,20 +87,20 @@ func ParseInterestsTopics(dat io.Reader) ([]Topic, error) {
 	return topics, nil
 }
 
-func ParseInterestsWriters(dat io.Reader) ([]User, error) {
+func ParseInterestsWriters(dat io.Reader) ([]schema.User, error) {
 	node, err := util.NewNodeFromHTML(dat)
 	if err != nil {
 		return nil, err
 	}
 
-	users := []User{}
+	users := []schema.User{}
 
-	node.Walk(func(n *util.Node) {
+	node.WalkChildren(func(n *util.Node) {
 		if n.IsElement("li") == false {
 			return
 		}
 
-		u := User{}
+		u := schema.User{}
 		walkLinks(n, func(href string, text string) {
 			u.Url = href
 			u.Name = text

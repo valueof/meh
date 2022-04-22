@@ -5,24 +5,25 @@ import (
 	"net"
 	"strings"
 
+	"github.com/valueof/meh/schema"
 	"github.com/valueof/meh/util"
 	"golang.org/x/net/html"
 )
 
-func ParseIps(dat io.Reader) ([]IP, error) {
+func ParseIps(dat io.Reader) ([]schema.IP, error) {
 	node, err := util.NewNodeFromHTML(dat)
 	if err != nil {
 		return nil, err
 	}
 
-	ips := []IP{}
+	ips := []schema.IP{}
 
-	node.Walk(func(n *util.Node) {
+	node.WalkChildren(func(n *util.Node) {
 		if n.IsElement("li") == false {
 			return
 		}
 
-		ip := IP{}
+		ip := schema.IP{}
 		for t := n.FirstChild; t != nil; t = t.NextSibling {
 			if t.Type != html.TextNode {
 				continue
