@@ -6,10 +6,11 @@ import (
 	"testing"
 
 	"github.com/valueof/meh/parser"
+	"github.com/valueof/meh/schema"
 )
 
 func TestParseBlocked(t *testing.T) {
-	tests := map[string][]parser.User{
+	tests := map[string][]schema.User{
 		"blocks/blocked.html": {
 			{Username: "bob"},
 			{Username: "lelandpalmer"},

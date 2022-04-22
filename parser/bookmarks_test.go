@@ -6,10 +6,11 @@ import (
 	"testing"
 
 	"github.com/valueof/meh/parser"
+	"github.com/valueof/meh/schema"
 )
 
 func TestParseBookmarks(t *testing.T) {
-	tests := map[string][]parser.Post{
+	tests := map[string][]schema.Post{
 		"bookmarks/bookmarks.html": {
 			{
 				Id:          "e06382acd276",

@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/valueof/meh/parser"
+	"github.com/valueof/meh/schema"
 )
 
 var input *string
@@ -33,6 +34,7 @@ func walk(dir string, logger *log.Logger, fn func(string, io.Reader)) {
 		}
 
 		dat, err := os.Open(path.Join(dir, f.Name()))
+		defer dat.Close()
 		if err != nil {
 			logger.Fatalf("%s: %v", f.Name(), err)
 			continue
@@ -42,16 +44,22 @@ func walk(dir string, logger *log.Logger, fn func(string, io.Reader)) {
 	}
 }
 
-func write(name string, logger *log.Logger, v any) {
+func write(fp string, logger *log.Logger, v any) {
 	out, err := json.MarshalIndent(v, "", "  ")
 	if err != nil {
-		logger.Fatalf("%s: %v", name, err)
+		logger.Fatalf("%s: %v", fp, err)
 	}
 
-	dir := path.Join(*output, name+".json")
-	err = os.WriteFile(dir, out, 0644)
+	// Make sure all directories exist to host this file
+	dir := path.Dir(path.Join(*output, fp))
+	err = os.MkdirAll(dir, os.ModePerm)
 	if err != nil {
-		logger.Fatalf("%s: %v", name, err)
+		logger.Fatalf("%s: %v", dir, err)
+	}
+
+	err = os.WriteFile(path.Join(*output, fp), out, 0644)
+	if err != nil {
+		logger.Fatalf("%s: %v", fp, err)
 	}
 }
 
@@ -84,7 +92,7 @@ func main() {
 
 		switch d.Name() {
 		case "blocks":
-			users := []parser.User{}
+			users := []schema.User{}
 			walk(d.Name(), logger, func(name string, dat io.Reader) {
 				part, err := parser.ParseBlocked(dat)
 				if err != nil {
@@ -94,11 +102,11 @@ func main() {
 				users = append(users, part...)
 			})
 
-			write("blocks", logger, parser.BlockedUsers{
+			write("blocks.json", logger, schema.BlockedUsers{
 				Users: users,
 			})
 		case "bookmarks":
-			posts := []parser.Post{}
+			posts := []schema.Post{}
 			walk(d.Name(), logger, func(name string, dat io.Reader) {
 				part, err := parser.ParseBookmarks(dat)
 				if err != nil {
@@ -108,11 +116,11 @@ func main() {
 				posts = append(posts, part...)
 			})
 
-			write("bookmarks", logger, parser.Bookmarks{
+			write("bookmarks.json", logger, schema.Bookmarks{
 				Posts: posts,
 			})
 		case "claps":
-			claps := []parser.Clap{}
+			claps := []schema.Clap{}
 			walk(d.Name(), logger, func(name string, dat io.Reader) {
 				part, err := parser.ParseClaps(dat)
 				if err != nil {
@@ -122,11 +130,11 @@ func main() {
 				claps = append(claps, part...)
 			})
 
-			write("claps", logger, parser.Claps{
+			write("claps.json", logger, schema.Claps{
 				Claps: claps,
 			})
 		case "interests":
-			interests := parser.Interests{}
+			interests := schema.Interests{}
 			walk(d.Name(), logger, func(name string, dat io.Reader) {
 				switch name {
 				case "publications.html":
@@ -162,9 +170,9 @@ func main() {
 				}
 			})
 
-			write("interests", logger, interests)
+			write("interests.json", logger, interests)
 		case "ips":
-			ips := []parser.IP{}
+			ips := []schema.IP{}
 			walk(d.Name(), logger, func(name string, dat io.Reader) {
 				part, err := parser.ParseIps(dat)
 				if err != nil {
@@ -174,9 +182,23 @@ func main() {
 				ips = append(ips, part...)
 			})
 
-			write("ips", logger, parser.IPs{
+			write("ips.json", logger, schema.IPs{
 				IPs: ips,
 			})
+		case "posts":
+			posts := map[string]schema.Post{}
+			walk(d.Name(), logger, func(name string, dat io.Reader) {
+				post, err := parser.ParsePost(dat)
+				if err != nil {
+					logger.Fatalf("%s: %v", name, err)
+					return
+				}
+				posts[strings.TrimSuffix(name, ".html")] = *post
+			})
+
+			for name, post := range posts {
+				write(path.Join("posts", name+".json"), logger, post)
+			}
 		default:
 			logger.Printf("skipped %s: not supported", d.Name())
 		}

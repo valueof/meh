@@ -7,10 +7,11 @@ import (
 	"testing"
 
 	"github.com/valueof/meh/parser"
+	"github.com/valueof/meh/schema"
 )
 
 func TestParseInterestsPublications(t *testing.T) {
-	tests := map[string][]parser.Publication{
+	tests := map[string][]schema.Publication{
 		"interests/publications.html": {
 			{
 				Name: "Wildlife Trekker",
@@ -51,7 +52,7 @@ func TestParseInterestsPublications(t *testing.T) {
 }
 
 func TestParseInterestsTags(t *testing.T) {
-	tests := map[string][]parser.Tag{
+	tests := map[string][]schema.Tag{
 		"interests/tags.html": {
 			{
 				Name: "Birds",
@@ -92,7 +93,7 @@ func TestParseInterestsTags(t *testing.T) {
 }
 
 func TestParseInterestsTopics(t *testing.T) {
-	tests := map[string][]parser.Topic{
+	tests := map[string][]schema.Topic{
 		"interests/topics.html": {
 			{
 				Name: "Photography",
@@ -133,7 +134,7 @@ func TestParseInterestsTopics(t *testing.T) {
 }
 
 func TestParseInterestsWriters(t *testing.T) {
-	tests := map[string][]parser.User{
+	tests := map[string][]schema.User{
 		"interests/writers.html": {
 			{
 				Name:     "Randy Runtsch",

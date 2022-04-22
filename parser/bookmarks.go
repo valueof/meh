@@ -3,34 +3,35 @@ package parser
 import (
 	"io"
 
+	"github.com/valueof/meh/schema"
 	"github.com/valueof/meh/util"
 	"golang.org/x/net/html"
 )
 
-func ParseBookmarks(dat io.Reader) ([]Post, error) {
-	doc, err := html.Parse(dat)
+func ParseBookmarks(dat io.Reader) ([]schema.Post, error) {
+	doc, err := util.NewNodeFromHTML(dat)
 	if err != nil {
 		return nil, err
 	}
 
-	bookmarks := []Post{}
+	bookmarks := []schema.Post{}
 
-	var f func(*html.Node)
-	f = func(n *html.Node) {
-		if n.Type == html.ElementNode && n.Data == "li" {
-			p := Post{}
+	var f func(*util.Node)
+	f = func(n *util.Node) {
+		if n.IsElement("li") {
+			p := schema.Post{}
 			for t := n.FirstChild; t != nil; t = t.NextSibling {
 				if t.Type != html.ElementNode {
 					continue
 				}
 
 				switch {
-				case t.Data == "a" && util.GetNodeAttr(t, "class") == "h-cite":
-					p.Url = util.GetNodeAttr(t, "href")
+				case t.Data == "a" && t.Attrs["class"] == "h-cite":
+					p.Url = t.Attrs["href"]
 					p.Id = util.ParseMediumId(p.Url)
-					p.Title = util.GetNodeText(t)
-				case t.Data == "time" && util.GetNodeAttr(t, "class") == "dt-published":
-					p.PublishedAt = util.GetNodeText(t)
+					p.Title = t.Text()
+				case t.Data == "time" && t.Attrs["class"] == "dt-published":
+					p.PublishedAt = t.Text()
 				}
 			}
 			bookmarks = append(bookmarks, p)
