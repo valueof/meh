@@ -77,6 +77,16 @@ type IPs struct {
 	IPs []IP `json:"ips"`
 }
 
+type List struct {
+	Name    string `json:"name"`
+	Summary string `json:"summary,omitempty"`
+	Posts   []Post `json:"posts"`
+}
+
+type Lists struct {
+	Lists []List `json:"list"`
+}
+
 type Markup struct {
 	Type  MarkupType `json:"type"`
 	Start int        `json:"start"`
@@ -88,8 +98,8 @@ type Post struct {
 	Id          string    `json:"id"`
 	Url         string    `json:"url"`
 	Title       string    `json:"title"`
-	PublishedAt string    `json:"publishedAt"`
-	Content     []Section `json:"content"`
+	PublishedAt string    `json:"publishedAt,omitempty"`
+	Content     []Section `json:"content,omitempty"`
 }
 
 type Publication struct {

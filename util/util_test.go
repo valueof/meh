@@ -24,6 +24,7 @@ func TestParseMediumId(t *testing.T) {
 		"https://medium.engineering/simple-style-sheets-c3b588867899":                "c3b588867899",
 		"https://medium.com/programming-is-a-nightmare/heaven-and-hell-cb1ec71a9d4a": "cb1ec71a9d4a",
 		"https://medium.com/@anton":                                                  "",
+		"https://medium.com/p/c3b588867899":                                          "c3b588867899",
 	}
 
 	for url, want := range tests {

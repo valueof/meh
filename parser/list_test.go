@@ -2,6 +2,7 @@ package parser_test
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"reflect"
@@ -12,16 +13,18 @@ import (
 	"github.com/valueof/meh/util"
 )
 
-func TestParsePost(t *testing.T) {
-	util.TestParser("../testdata/posts", t, func(in, out io.Reader) bool {
-		have, err := parser.ParsePost(in)
+func TestParseLists(t *testing.T) {
+	util.TestParser("../testdata/lists", t, func(in, out io.Reader) bool {
+		have, err := parser.ParseList(in)
 		if err != nil {
 			t.Errorf("error parsing input: %v", err)
 		}
 
-		var want schema.Post
+		var want schema.List
 		outb, _ := ioutil.ReadAll(out)
 		json.Unmarshal(outb, &want)
+
+		fmt.Println(have)
 
 		return reflect.DeepEqual(have, &want)
 	})

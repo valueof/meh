@@ -1,0 +1,26 @@
+{
+    "name": "Archive",
+    "summary": "Summary of archive",
+    "posts": [
+        {
+            "id": "e06382acd276",
+            "url": "https://medium.com/p/e06382acd276",
+            "title": "Sprint Burndown Charts Gone Wrong"
+        },
+        {
+            "id": "75aa4ed61c",
+            "url": "https://medium.com/p/75aa4ed61c",
+            "title": "Don’t Call It a Trend: A Brief History of Organizing in Tech"
+        },
+        {
+            "id": "e23a49a52696",
+            "url": "https://medium.com/p/e23a49a52696",
+            "title": "Life of a Vegetarian in Japan"
+        },
+        {
+            "id": "97c9489ccafa",
+            "url": "https://medium.com/p/97c9489ccafa",
+            "title": "I Left the Ad Industry Because Our Use of Data Tracking Terrified Me"
+        }
+    ]
+}

@@ -199,6 +199,20 @@ func main() {
 			for name, post := range posts {
 				write(path.Join("posts", name+".json"), logger, post)
 			}
+		case "lists":
+			lists := []schema.List{}
+			walk(d.Name(), logger, func(name string, dat io.Reader) {
+				list, err := parser.ParseList(dat)
+				if err != nil {
+					logger.Fatalf("%s: %v", name, err)
+					return
+				}
+				lists = append(lists, *list)
+			})
+
+			write("lists.json", logger, schema.Lists{
+				Lists: lists,
+			})
 		default:
 			logger.Printf("skipped %s: not supported", d.Name())
 		}

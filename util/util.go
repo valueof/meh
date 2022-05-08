@@ -20,14 +20,22 @@ var SPACE_RE *regexp.Regexp = regexp.MustCompile(`\s+`)
 // ParseMediumId Parses post ID out of a Medium URL. Links to all Medium posts
 // end with a unique value that represents its ID:
 // 	https://medium.com/p/my-slug-5940ded906e7 -> 5940ded906e7
+// 	https://medium.com/p/5940ded906e7         -> 5940ded906e7
 func ParseMediumId(s string) string {
 	url, err := url.Parse(s)
 	if err != nil {
 		return ""
 	}
 
-	re := regexp.MustCompile("-([a-z0-9]+)$")
-	m := re.FindStringSubmatch(url.Path)
+	re1 := regexp.MustCompile("-([a-z0-9]+)$")
+	re2 := regexp.MustCompile(`\/p\/([a-z0-9]+)$`)
+
+	m := re1.FindStringSubmatch(url.Path)
+	if len(m) >= 2 {
+		return m[1]
+	}
+
+	m = re2.FindStringSubmatch(url.Path)
 	if len(m) >= 2 {
 		return m[1]
 	}
