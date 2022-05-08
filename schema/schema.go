@@ -107,7 +107,7 @@ type Publication struct {
 	Url  string `json:"url"`
 }
 
-type PublicationsFollowing struct {
+type Publications struct {
 	Publications []Publication `json:"publications"`
 }
 
@@ -126,8 +126,16 @@ type Topic struct {
 	Url  string `json:"url"`
 }
 
+type Topics struct {
+	Topics []Topic `json:"topics"`
+}
+
 type User struct {
-	Name     string `json:"name"`
+	Name     string `json:"name,omitempty"`
 	Username string `json:"username"`
 	Url      string `json:"url"`
+}
+
+type Users struct {
+	Users []User `json:"users"`
 }

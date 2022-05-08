@@ -216,7 +216,7 @@ func main() {
 		case "pubs-following":
 			pubs := []schema.Publication{}
 			walk(d.Name(), logger, func(name string, dat io.Reader) {
-				part, err := parser.ParsePubsFollowing(dat)
+				part, err := parser.ParsePublicationFollowing(dat)
 				if err != nil {
 					logger.Fatalf("%s: %v", name, err)
 					return
@@ -224,8 +224,36 @@ func main() {
 				pubs = append(pubs, part...)
 			})
 
-			write("pubs-following.json", logger, schema.PublicationsFollowing{
+			write("following/publications.json", logger, schema.Publications{
 				Publications: pubs,
+			})
+		case "topics-following":
+			topics := []schema.Topic{}
+			walk(d.Name(), logger, func(name string, dat io.Reader) {
+				part, err := parser.ParseTopicsFollowing(dat)
+				if err != nil {
+					logger.Fatalf("%s: %v", name, err)
+					return
+				}
+				topics = append(topics, part...)
+			})
+
+			write("following/topics.json", logger, schema.Topics{
+				Topics: topics,
+			})
+		case "users-following":
+			users := []schema.User{}
+			walk(d.Name(), logger, func(name string, dat io.Reader) {
+				part, err := parser.ParseUsersFollowing(dat)
+				if err != nil {
+					logger.Fatalf("%s: %v", name, err)
+					return
+				}
+				users = append(users, part...)
+			})
+
+			write("following/users.json", logger, schema.Users{
+				Users: users,
 			})
 		default:
 			logger.Printf("skipped %s: not supported", d.Name())
