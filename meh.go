@@ -213,6 +213,20 @@ func main() {
 			write("lists.json", logger, schema.Lists{
 				Lists: lists,
 			})
+		case "pubs-following":
+			pubs := []schema.Publication{}
+			walk(d.Name(), logger, func(name string, dat io.Reader) {
+				part, err := parser.ParsePubsFollowing(dat)
+				if err != nil {
+					logger.Fatalf("%s: %v", name, err)
+					return
+				}
+				pubs = append(pubs, part...)
+			})
+
+			write("pubs-following.json", logger, schema.PublicationsFollowing{
+				Publications: pubs,
+			})
 		default:
 			logger.Printf("skipped %s: not supported", d.Name())
 		}

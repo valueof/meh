@@ -107,6 +107,10 @@ type Publication struct {
 	Url  string `json:"url"`
 }
 
+type PublicationsFollowing struct {
+	Publications []Publication `json:"publications"`
+}
+
 type Section struct {
 	Name string         `json:"name"`
 	Body []InnerSection `json:"body"`

@@ -12,17 +12,17 @@ import (
 	"github.com/valueof/meh/util"
 )
 
-func TestParseLists(t *testing.T) {
-	util.TestParser("../testdata/lists", t, func(in, out io.Reader) bool {
-		have, err := parser.ParseList(in)
+func TestParsePubsFollowing(t *testing.T) {
+	util.TestParser("../testdata/pubs-following", t, func(in, out io.Reader) bool {
+		have, err := parser.ParsePubsFollowing(in)
 		if err != nil {
 			t.Errorf("error parsing input: %v", err)
 		}
 
-		var want schema.List
+		var want []schema.Publication
 		outb, _ := ioutil.ReadAll(out)
 		json.Unmarshal(outb, &want)
 
-		return reflect.DeepEqual(have, &want)
+		return reflect.DeepEqual(have, want)
 	})
 }
