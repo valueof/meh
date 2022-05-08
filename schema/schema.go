@@ -116,6 +116,17 @@ type Section struct {
 	Body []InnerSection `json:"body"`
 }
 
+type Session struct {
+	CreatedAt        string `json:"createdAt,omitempty"`
+	LastSeenAt       string `json:"lastSeenAt,omitempty"`
+	LastSeenLocation string `json:"lastSeenLocation,omitempty"`
+	UserAgent        string `json:"userAgent,omitempty"`
+}
+
+type Sessions struct {
+	Sessions []Session `json:"sessions"`
+}
+
 type Tag struct {
 	Name string `json:"name"`
 	Url  string `json:"url"`

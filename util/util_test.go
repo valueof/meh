@@ -53,7 +53,7 @@ func TestParseMediumUsername(t *testing.T) {
 
 func TestText(t *testing.T) {
 	tests := map[string]string{
-		//`<p>The <em>owls</em> are not what <strong><em>they seem</em></strong></p>`: "The owls are not what they seem",
+		`<p>The <em>owls</em> are not what <strong><em>they seem</em></strong></p>`: "The owls are not what they seem",
 		`<p>
 			The <em>owls</em>
 			are not what
@@ -62,6 +62,10 @@ func TestText(t *testing.T) {
 			</strong>
 		</p>
 		`: "The owls are not what they seem",
+		`The
+		  owls are
+		    not what they
+		 seem`: "The owls are not what they seem",
 	}
 
 	for src, want := range tests {

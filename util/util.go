@@ -145,12 +145,17 @@ func (n *Node) WalkChildren(cb func(*Node)) {
 //	Out: This is a message from the log
 func (n *Node) Text() (s string) {
 	s = ""
-	n.WalkChildren(func(t *Node) {
-		if t.Type == html.TextNode {
-			s += collapseSpace(t.Data)
-		}
-	})
-	s = strings.TrimSpace(s)
+
+	if n.Type == html.TextNode {
+		s = strings.TrimSpace(collapseSpace(n.Data))
+	} else {
+		n.WalkChildren(func(t *Node) {
+			if t.Type == html.TextNode {
+				s += collapseSpace(t.Data)
+			}
+		})
+		s = strings.TrimSpace(s)
+	}
 	return
 }
 

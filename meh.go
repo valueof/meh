@@ -269,6 +269,20 @@ func main() {
 			write("following/suggested.json", logger, schema.Users{
 				Users: users,
 			})
+		case "sessions":
+			sessions := []schema.Session{}
+			walk(d.Name(), logger, func(name string, dat io.Reader) {
+				part, err := parser.ParseSessions(dat)
+				if err != nil {
+					logger.Fatalf("%s: %v", name, err)
+					return
+				}
+				sessions = append(sessions, part...)
+			})
+
+			write("sessions.json", logger, schema.Sessions{
+				Sessions: sessions,
+			})
 		default:
 			logger.Printf("skipped %s: not supported", d.Name())
 		}
