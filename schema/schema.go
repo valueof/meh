@@ -24,10 +24,12 @@ const (
 )
 
 type BlockedUsers struct {
+	Meta  string `json:"meta,omitempty"`
 	Users []User `json:"users"`
 }
 
 type Bookmarks struct {
+	Meta  string `json:"meta,omitempty"`
 	Posts []Post `json:"posts"`
 }
 
@@ -37,6 +39,7 @@ type Clap struct {
 }
 
 type Claps struct {
+	Meta  string `json:"meta,omitempty"`
 	Claps []Clap `json:"claps"`
 }
 
@@ -62,6 +65,7 @@ type InnerSection struct {
 }
 
 type Interests struct {
+	Meta         string        `json:"meta,omitempty"`
 	Publications []Publication `json:"publications"`
 	Tags         []Tag         `json:"tags"`
 	Topics       []Topic       `json:"topics"`
@@ -74,7 +78,8 @@ type IP struct {
 }
 
 type IPs struct {
-	IPs []IP `json:"ips"`
+	Meta string `json:"meta,omitempty"`
+	IPs  []IP   `json:"ips"`
 }
 
 type List struct {
@@ -84,6 +89,7 @@ type List struct {
 }
 
 type Lists struct {
+	Meta  string `json:"meta,omitempty"`
 	Lists []List `json:"list"`
 }
 
@@ -108,6 +114,7 @@ type Publication struct {
 }
 
 type Publications struct {
+	Meta         string        `json:"meta,omitempty"`
 	Publications []Publication `json:"publications"`
 }
 
@@ -124,6 +131,7 @@ type Session struct {
 }
 
 type Sessions struct {
+	Meta     string    `json:"meta,omitempty"`
 	Sessions []Session `json:"sessions"`
 }
 
@@ -138,6 +146,7 @@ type Topic struct {
 }
 
 type Topics struct {
+	Meta   string  `json:"meta,omitempty"`
 	Topics []Topic `json:"topics"`
 }
 
@@ -148,5 +157,6 @@ type User struct {
 }
 
 type Users struct {
+	Meta  string `json:"meta,omitempty"`
 	Users []User `json:"users"`
 }

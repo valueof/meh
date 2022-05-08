@@ -103,6 +103,7 @@ func main() {
 			})
 
 			write("blocks.json", logger, schema.BlockedUsers{
+				Meta:  "Blocked users",
 				Users: users,
 			})
 		case "bookmarks":
@@ -117,6 +118,7 @@ func main() {
 			})
 
 			write("bookmarks.json", logger, schema.Bookmarks{
+				Meta:  "Bookmarked posts",
 				Posts: posts,
 			})
 		case "claps":
@@ -131,10 +133,14 @@ func main() {
 			})
 
 			write("claps.json", logger, schema.Claps{
+				Meta:  "Posts you've clapped for",
 				Claps: claps,
 			})
 		case "interests":
-			interests := schema.Interests{}
+			interests := schema.Interests{
+				Meta: "Topics you're interested in",
+			}
+
 			walk(d.Name(), logger, func(name string, dat io.Reader) {
 				switch name {
 				case "publications.html":
@@ -183,7 +189,8 @@ func main() {
 			})
 
 			write("ips.json", logger, schema.IPs{
-				IPs: ips,
+				Meta: "Your IP history (note: Medium deletes IP history after 30 days)",
+				IPs:  ips,
 			})
 		case "posts":
 			posts := map[string]schema.Post{}
@@ -211,6 +218,7 @@ func main() {
 			})
 
 			write("lists.json", logger, schema.Lists{
+				Meta:  "Lists you've created",
 				Lists: lists,
 			})
 		case "pubs-following":
@@ -225,6 +233,7 @@ func main() {
 			})
 
 			write("following/publications.json", logger, schema.Publications{
+				Meta:         "Publications you follow",
 				Publications: pubs,
 			})
 		case "topics-following":
@@ -239,6 +248,7 @@ func main() {
 			})
 
 			write("following/topics.json", logger, schema.Topics{
+				Meta:   "Topics you follow",
 				Topics: topics,
 			})
 		case "users-following":
@@ -253,6 +263,7 @@ func main() {
 			})
 
 			write("following/users.json", logger, schema.Users{
+				Meta:  "Users you follow",
 				Users: users,
 			})
 		case "twitter":
@@ -267,6 +278,7 @@ func main() {
 			})
 
 			write("following/suggested.json", logger, schema.Users{
+				Meta:  "Your Twitter friends who are also on Medium",
 				Users: users,
 			})
 		case "sessions":
@@ -281,6 +293,7 @@ func main() {
 			})
 
 			write("sessions.json", logger, schema.Sessions{
+				Meta:     "Your active and inactive sessions across devices",
 				Sessions: sessions,
 			})
 		default:
