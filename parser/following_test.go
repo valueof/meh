@@ -56,3 +56,18 @@ func TestParseUsersFollowing(t *testing.T) {
 		return reflect.DeepEqual(have, want)
 	})
 }
+
+func TestParseUsersSuggested(t *testing.T) {
+	util.TestParser("../testdata/following/suggested", t, func(in, out io.Reader) bool {
+		have, err := parser.ParseUsersSuggested(in)
+		if err != nil {
+			t.Errorf("error parsing input: %v", err)
+		}
+
+		var want []schema.User
+		outb, _ := ioutil.ReadAll(out)
+		json.Unmarshal(outb, &want)
+
+		return reflect.DeepEqual(have, want)
+	})
+}

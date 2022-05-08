@@ -255,6 +255,20 @@ func main() {
 			write("following/users.json", logger, schema.Users{
 				Users: users,
 			})
+		case "twitter":
+			users := []schema.User{}
+			walk(d.Name(), logger, func(name string, dat io.Reader) {
+				part, err := parser.ParseUsersSuggested(dat)
+				if err != nil {
+					logger.Fatalf("%s: %v", name, err)
+					return
+				}
+				users = append(users, part...)
+			})
+
+			write("following/suggested.json", logger, schema.Users{
+				Users: users,
+			})
 		default:
 			logger.Printf("skipped %s: not supported", d.Name())
 		}
