@@ -211,13 +211,99 @@ func (n *Node) Markup() (markup []schema.Markup) {
 			a := fn(schema.A)
 			a.Href = t.Attrs["href"]
 			markup = append(markup, a)
-
+		case "span":
+			if t.HasClass("markup--highlight") {
+				markup = append(markup, fn(schema.HIGHLIGHT))
+			}
 		default:
 			fmt.Printf("Unknown markup: %s; %s\n", t.Data, t.Text())
 		}
 	})
 
 	return
+}
+
+// Extract extracts image metadata from a given Node
+func (n *Node) ExtractImage() (img *schema.Image) {
+	for c := n.FirstChild; c != nil; c = c.NextSibling {
+		if c.IsElement("img") == false {
+			continue
+		}
+
+		return &schema.Image{
+			Name:   c.Attrs["data-image-id"],
+			Width:  c.Attrs["data-width"],
+			Height: c.Attrs["data-height"],
+			Source: c.Attrs["src"],
+		}
+	}
+
+	return nil
+}
+
+// ParseGrafs parses a give Node and extracts all grafs, together with their markups.
+func (n *Node) ParseGrafs() []schema.Graf {
+	grafs := []schema.Graf{}
+
+	for g := n.FirstChild; g != nil; g = g.NextSibling {
+		if g.HasClass("graf") == false {
+			continue
+		}
+
+		graf := schema.Graf{
+			Name:    g.Attrs["name"],
+			Markups: []schema.Markup{},
+		}
+
+		switch {
+		case g.HasClass("graf--h1"):
+			graf.Type = schema.H1
+			graf.Text = g.Text()
+			graf.Markups = g.Markup()
+		case g.HasClass("graf--h2"):
+			graf.Type = schema.H2
+			graf.Text = g.Text()
+			graf.Markups = g.Markup()
+		case g.HasClass("graf--h3"):
+			graf.Type = schema.H3
+			graf.Text = g.Text()
+			graf.Markups = g.Markup()
+		case g.HasClass("graf--h4"):
+			graf.Type = schema.H4
+			graf.Text = g.Text()
+			graf.Markups = g.Markup()
+		case g.HasClass("graf--blockquote"):
+			fallthrough
+		case g.HasClass("graf--pullquote"):
+			graf.Type = schema.BLOCKQUOTE
+			graf.Text = g.Text()
+			graf.Markups = g.Markup()
+		case g.HasClass("graf--p"):
+			graf.Type = schema.P
+			graf.Text = g.Text()
+			graf.Markups = g.Markup()
+		case g.HasClass("graf--figure"):
+			graf.Type = schema.IMG
+			graf.Image = g.ExtractImage()
+		case g.HasClass("graf--mixtapeEmbed"):
+			graf.Type = schema.EMBED
+			graf.Text = g.Text()
+			// TODO(anton): Better support for mixtapes
+		case g.HasClass("graf--pre"):
+			graf.Type = schema.PRE
+			graf.Text = g.TextPreformatted()
+		case g.HasClass("graf--empty"):
+			// Ignore empty grafs
+		default:
+			fmt.Printf("Unknown graf type: %s\n", g.Attrs["class"])
+		}
+
+		if graf.Type != "" {
+			grafs = append(grafs, graf)
+		}
+	}
+
+	return grafs
 }
 
 // IsElement returns true if the Node is html.ElementNode with a given tag name

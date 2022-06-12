@@ -296,6 +296,21 @@ func main() {
 				Meta:     "Your active and inactive sessions across devices",
 				Sessions: sessions,
 			})
+		case "highlights":
+			highlights := []schema.Highlight{}
+			walk(d.Name(), logger, func(name string, dat io.Reader) {
+				part, err := parser.ParseHighlights(dat)
+				if err != nil {
+					logger.Fatalf("%s: %v", name, err)
+					return
+				}
+				highlights = append(highlights, part...)
+			})
+
+			write("highlights.json", logger, schema.Highlights{
+				Meta:       "Your highlights",
+				Highlights: highlights,
+			})
 		default:
 			logger.Printf("skipped %s: not supported", d.Name())
 		}

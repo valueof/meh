@@ -4,10 +4,11 @@ type MarkupType string
 type GrafType string
 
 const (
-	A      MarkupType = "a"
-	EM     MarkupType = "em"
-	STRONG MarkupType = "strong"
-	BR     MarkupType = "br"
+	A         MarkupType = "a"
+	EM        MarkupType = "em"
+	STRONG    MarkupType = "strong"
+	BR        MarkupType = "br"
+	HIGHLIGHT MarkupType = "highlight"
 )
 
 const (
@@ -49,6 +50,16 @@ type Graf struct {
 	Text    string   `json:"text,omitempty"`
 	Image   *Image   `json:"image,omitempty"`
 	Markups []Markup `json:"markups"`
+}
+
+type Highlight struct {
+	CreatedAt string `json:"createdAt"`
+	Body      []Graf `json:"grafs"`
+}
+
+type Highlights struct {
+	Meta       string      `json:"meta,omitempty"`
+	Highlights []Highlight `json:"highlights"`
 }
 
 type Image struct {
