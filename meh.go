@@ -8,72 +8,128 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"path"
 	"strings"
+	"sync"
 
 	"github.com/valueof/meh/parser"
 	"github.com/valueof/meh/schema"
+	"github.com/valueof/meh/util"
 )
 
 var input *string
 var output *string
 var verbose *bool
+var withImages *bool
+var logger *log.Logger
+var logbuf bytes.Buffer
 
-func walk(dir string, logger *log.Logger, fn func(string, io.Reader)) {
+func init() {
+	input = flag.String("in", "", "path to the (uncompressed) medium archive")
+	output = flag.String("out", "", "output directory")
+	verbose = flag.Bool("verbose", false, "whether to print logs to stdout")
+	withImages = flag.Bool("withImages", false, "whether to download images from medium cdn")
+	logger = log.New(&logbuf, "meh: ", log.Lmsgprefix)
+}
+
+func walk(dir string, fn func(string, io.Reader)) error {
 	dir = path.Join(*input, dir)
 	files, err := ioutil.ReadDir(dir)
 	if err != nil {
-		logger.Fatalf("%s: %v\n", path.Base(dir), err)
+		logger.Printf("can't read %s, skipping", path.Base(dir))
+		return err
 	}
 
 	for _, f := range files {
 		if strings.HasSuffix(f.Name(), ".html") == false {
-			logger.Printf("skipped %s: not .html", f.Name())
+			logger.Printf("%s is not an html file, skipping", f.Name())
 			continue
 		}
 
 		dat, err := os.Open(path.Join(dir, f.Name()))
-		defer dat.Close()
 		if err != nil {
-			logger.Fatalf("%s: %v", f.Name(), err)
+			logger.Printf("can't read %s, skipping", f.Name())
 			continue
 		}
+		defer dat.Close()
 
 		fn(f.Name(), dat)
 	}
+
+	return nil
 }
 
-func write(fp string, logger *log.Logger, v any) {
+func write(fp string, v any) {
 	out, err := json.MarshalIndent(v, "", "  ")
 	if err != nil {
-		logger.Fatalf("%s: %v", fp, err)
+		logger.Printf("can't marshal output for %s, skipping", fp)
+		return
 	}
 
 	// Make sure all directories exist to host this file
 	dir := path.Dir(path.Join(*output, fp))
 	err = os.MkdirAll(dir, os.ModePerm)
 	if err != nil {
-		logger.Fatalf("%s: %v", dir, err)
+		logger.Printf("can't create %s", dir)
+		return
 	}
 
-	err = os.WriteFile(path.Join(*output, fp), out, 0644)
+	dest := path.Join(*output, fp)
+	err = os.WriteFile(dest, out, 0644)
 	if err != nil {
-		logger.Fatalf("%s: %v", fp, err)
+		logger.Printf("can't write to %s", dest)
 	}
 }
 
+func download(img, dest string) {
+	src := "https://cdn-images-1.medium.com/" + img
+	out, err := os.Create(dest)
+	if err != nil {
+		logger.Printf("error creating file for %s: %v", img, err)
+		return
+	}
+	defer out.Close()
+
+	resp, err := http.Get(src)
+	if err != nil {
+		logger.Printf("error downloading %s: %v", src, err)
+		return
+	}
+	defer resp.Body.Close()
+
+	_, err = io.Copy(out, resp.Body)
+	if err != nil {
+		logger.Printf("error saving %s: %v", img, err)
+		return
+	}
+
+	logger.Printf("downloaded %s", img)
+}
+
+func downloadImages(images []string) {
+	dir := path.Join(*output, "images")
+	err := os.MkdirAll(dir, os.ModePerm)
+	if err != nil {
+		logger.Printf("couldn't create %s, images will not be downloaded", dir)
+		return
+	}
+
+	var wg sync.WaitGroup
+	for _, img := range images {
+		wg.Add(1)
+		img := img
+		go func() {
+			defer wg.Done()
+			download(img, path.Join(dir, img))
+		}()
+	}
+	wg.Wait()
+}
+
 func main() {
-	var (
-		buf    bytes.Buffer
-		logger = log.New(&buf, "meh: ", log.Llongfile)
-	)
-
-	input = flag.String("in", "", "path to the (uncompressed) medium archive")
-	output = flag.String("out", "", "output directory")
-	verbose = flag.Bool("verbose", false, "whether to print logs to stdout")
 	flag.Parse()
-
 	if *input == "" || *output == "" {
 		flag.Usage()
 		return
@@ -86,262 +142,337 @@ func main() {
 
 	for _, d := range dirs {
 		if d.IsDir() == false {
-			logger.Printf("skipped %s: not a directory", d.Name())
+			logger.Printf("%s is not a directory, skipping", d.Name())
 			continue
 		}
 
 		switch d.Name() {
 		case "blocks":
 			users := []schema.User{}
-			walk(d.Name(), logger, func(name string, dat io.Reader) {
+			err = walk(d.Name(), func(name string, dat io.Reader) {
 				part, err := parser.ParseBlocked(dat)
 				if err != nil {
-					logger.Fatalf("%s: %v", name, err)
+					logger.Printf("error parsing %s, skipping", name)
 					return
 				}
+				logger.Printf("parsed %s", name)
 				users = append(users, part...)
 			})
 
-			write("blocks.json", logger, schema.BlockedUsers{
-				Meta:  "Blocked users",
-				Users: users,
-			})
+			if err != nil {
+				write("blocks.json", schema.BlockedUsers{
+					Meta:  "Blocked users",
+					Users: users,
+				})
+			}
 		case "bookmarks":
 			posts := []schema.Post{}
-			walk(d.Name(), logger, func(name string, dat io.Reader) {
+			err = walk(d.Name(), func(name string, dat io.Reader) {
 				part, err := parser.ParseBookmarks(dat)
 				if err != nil {
-					logger.Fatalf("%s: %v", name, err)
+					logger.Printf("error parsing %s, skipping", name)
 					return
 				}
+				logger.Printf("parsed %s", name)
 				posts = append(posts, part...)
 			})
 
-			write("bookmarks.json", logger, schema.Bookmarks{
-				Meta:  "Bookmarked posts",
-				Posts: posts,
-			})
+			if err != nil {
+				write("bookmarks.json", schema.Bookmarks{
+					Meta:  "Bookmarked posts",
+					Posts: posts,
+				})
+			}
 		case "claps":
 			claps := []schema.Clap{}
-			walk(d.Name(), logger, func(name string, dat io.Reader) {
+			err = walk(d.Name(), func(name string, dat io.Reader) {
 				part, err := parser.ParseClaps(dat)
 				if err != nil {
-					logger.Fatalf("%s: %v", name, err)
+					logger.Printf("error parsing %s, skipping", name)
 					return
 				}
+				logger.Printf("parsed %s", name)
 				claps = append(claps, part...)
 			})
 
-			write("claps.json", logger, schema.Claps{
-				Meta:  "Posts you've clapped for",
-				Claps: claps,
-			})
+			if err != nil {
+				write("claps.json", schema.Claps{
+					Meta:  "Posts you've clapped for",
+					Claps: claps,
+				})
+			}
 		case "interests":
 			interests := schema.Interests{
 				Meta: "Topics you're interested in",
 			}
 
-			walk(d.Name(), logger, func(name string, dat io.Reader) {
+			err = walk(d.Name(), func(name string, dat io.Reader) {
 				switch name {
 				case "publications.html":
 					pubs, err := parser.ParseInterestsPublications(dat)
 					if err != nil {
-						logger.Fatalf("%s: %v", name, err)
+						logger.Printf("error parsing %s, skipping", name)
 						return
 					}
+					logger.Printf("parsed %s", name)
 					interests.Publications = pubs
 				case "tags.html":
 					tags, err := parser.ParseInterestsTags(dat)
 					if err != nil {
-						logger.Fatalf("%s: %v", name, err)
+						logger.Printf("error parsing %s, skipping", name)
 						return
 					}
+					logger.Printf("parsed %s", name)
 					interests.Tags = tags
 				case "topics.html":
 					topics, err := parser.ParseInterestsTopics(dat)
 					if err != nil {
-						logger.Fatalf("%s: %v", name, err)
+						logger.Printf("error parsing %s, skipping", name)
 						return
 					}
+					logger.Printf("parsed %s", name)
 					interests.Topics = topics
 				case "writers.html":
 					writers, err := parser.ParseInterestsWriters(dat)
 					if err != nil {
-						logger.Fatalf("%s: %v", name, err)
+						logger.Printf("error parsing %s, skipping", name)
 						return
 					}
+					logger.Printf("parsed %s", name)
 					interests.Writers = writers
 				default:
-					logger.Printf("Unknown interests file: %s", name)
+					logger.Printf("Unknown interests file %s, skipping", name)
 				}
 			})
 
-			write("interests.json", logger, interests)
+			if err != nil {
+				write("interests.json", interests)
+			}
 		case "ips":
 			ips := []schema.IP{}
-			walk(d.Name(), logger, func(name string, dat io.Reader) {
+			err = walk(d.Name(), func(name string, dat io.Reader) {
 				part, err := parser.ParseIps(dat)
 				if err != nil {
-					logger.Fatalf("%s: %v", name, err)
+					logger.Printf("error parsing %s, skipping", name)
 					return
 				}
+				logger.Printf("parsed %s", name)
 				ips = append(ips, part...)
 			})
 
-			write("ips.json", logger, schema.IPs{
-				Meta: "Your IP history (note: Medium deletes IP history after 30 days)",
-				IPs:  ips,
-			})
+			if err != nil {
+				write("ips.json", schema.IPs{
+					Meta: "Your IP history (note: Medium deletes IP history after 30 days)",
+					IPs:  ips,
+				})
+			}
 		case "posts":
 			posts := map[string]schema.Post{}
-			walk(d.Name(), logger, func(name string, dat io.Reader) {
+			err = walk(d.Name(), func(name string, dat io.Reader) {
 				post, err := parser.ParsePost(dat)
 				if err != nil {
-					logger.Fatalf("%s: %v", name, err)
+					logger.Printf("error parsing %s, skipping", name)
 					return
 				}
+				logger.Printf("parsed %s", name)
 				posts[strings.TrimSuffix(name, ".html")] = *post
 			})
 
-			for name, post := range posts {
-				write(path.Join("posts", name+".json"), logger, post)
+			if err != nil {
+				for name, post := range posts {
+					write(path.Join("posts", name+".json"), post)
+				}
 			}
 		case "lists":
 			lists := []schema.List{}
-			walk(d.Name(), logger, func(name string, dat io.Reader) {
+			err = walk(d.Name(), func(name string, dat io.Reader) {
 				list, err := parser.ParseList(dat)
 				if err != nil {
-					logger.Fatalf("%s: %v", name, err)
+					logger.Printf("error parsing %s, skipping", name)
 					return
 				}
+				logger.Printf("parsed %s", name)
 				lists = append(lists, *list)
 			})
 
-			write("lists.json", logger, schema.Lists{
-				Meta:  "Lists you've created",
-				Lists: lists,
-			})
+			if err != nil {
+				write("lists.json", schema.Lists{
+					Meta:  "Lists you've created",
+					Lists: lists,
+				})
+			}
 		case "pubs-following":
 			pubs := []schema.Publication{}
-			walk(d.Name(), logger, func(name string, dat io.Reader) {
+			err = walk(d.Name(), func(name string, dat io.Reader) {
 				part, err := parser.ParsePublicationFollowing(dat)
 				if err != nil {
-					logger.Fatalf("%s: %v", name, err)
+					logger.Printf("error parsing %s, skipping", name)
 					return
 				}
+				logger.Printf("parsed %s", name)
 				pubs = append(pubs, part...)
 			})
 
-			write("following/publications.json", logger, schema.Publications{
-				Meta:         "Publications you follow",
-				Publications: pubs,
-			})
+			if err != nil {
+				write("following/publications.json", schema.Publications{
+					Meta:         "Publications you follow",
+					Publications: pubs,
+				})
+			}
 		case "topics-following":
 			topics := []schema.Topic{}
-			walk(d.Name(), logger, func(name string, dat io.Reader) {
+			err = walk(d.Name(), func(name string, dat io.Reader) {
 				part, err := parser.ParseTopicsFollowing(dat)
 				if err != nil {
-					logger.Fatalf("%s: %v", name, err)
+					logger.Printf("error parsing %s, skipping", name)
 					return
 				}
+				logger.Printf("parsed %s", name)
 				topics = append(topics, part...)
 			})
 
-			write("following/topics.json", logger, schema.Topics{
-				Meta:   "Topics you follow",
-				Topics: topics,
-			})
+			if err != nil {
+				write("following/topics.json", schema.Topics{
+					Meta:   "Topics you follow",
+					Topics: topics,
+				})
+			}
 		case "users-following":
 			users := []schema.User{}
-			walk(d.Name(), logger, func(name string, dat io.Reader) {
+			err = walk(d.Name(), func(name string, dat io.Reader) {
 				part, err := parser.ParseUsersFollowing(dat)
 				if err != nil {
-					logger.Fatalf("%s: %v", name, err)
+					logger.Printf("error parsing %s, skipping", name)
 					return
 				}
+				logger.Printf("parsed %s", name)
 				users = append(users, part...)
 			})
 
-			write("following/users.json", logger, schema.Users{
-				Meta:  "Users you follow",
-				Users: users,
-			})
+			if err != nil {
+				write("following/users.json", schema.Users{
+					Meta:  "Users you follow",
+					Users: users,
+				})
+			}
 		case "twitter":
 			users := []schema.User{}
-			walk(d.Name(), logger, func(name string, dat io.Reader) {
+			err = walk(d.Name(), func(name string, dat io.Reader) {
 				part, err := parser.ParseUsersSuggested(dat)
 				if err != nil {
-					logger.Fatalf("%s: %v", name, err)
+					logger.Printf("error parsing %s, skipping", name)
 					return
 				}
+				logger.Printf("parsed %s", name)
 				users = append(users, part...)
 			})
 
-			write("following/suggested.json", logger, schema.Users{
-				Meta:  "Your Twitter friends who are also on Medium",
-				Users: users,
-			})
+			if err != nil {
+				write("following/suggested.json", schema.Users{
+					Meta:  "Your Twitter friends who are also on Medium",
+					Users: users,
+				})
+			}
 		case "sessions":
 			sessions := []schema.Session{}
-			walk(d.Name(), logger, func(name string, dat io.Reader) {
+			err = walk(d.Name(), func(name string, dat io.Reader) {
 				part, err := parser.ParseSessions(dat)
 				if err != nil {
-					logger.Fatalf("%s: %v", name, err)
+					logger.Printf("error parsing %s, skipping", name)
 					return
 				}
+				logger.Printf("parsed %s", name)
 				sessions = append(sessions, part...)
 			})
 
-			write("sessions.json", logger, schema.Sessions{
-				Meta:     "Your active and inactive sessions across devices",
-				Sessions: sessions,
-			})
+			if err != nil {
+				write("sessions.json", schema.Sessions{
+					Meta:     "Your active and inactive sessions across devices",
+					Sessions: sessions,
+				})
+			}
 		case "highlights":
 			highlights := []schema.Highlight{}
-			walk(d.Name(), logger, func(name string, dat io.Reader) {
+			err = walk(d.Name(), func(name string, dat io.Reader) {
 				part, err := parser.ParseHighlights(dat)
 				if err != nil {
-					logger.Fatalf("%s: %v", name, err)
+					logger.Printf("error parsing %s, skipping", name)
 					return
 				}
+				logger.Printf("parsed %s", name)
 				highlights = append(highlights, part...)
 			})
 
-			write("highlights.json", logger, schema.Highlights{
-				Meta:       "Your highlights",
-				Highlights: highlights,
-			})
+			if err != nil {
+				write("highlights.json", schema.Highlights{
+					Meta:       "Your highlights",
+					Highlights: highlights,
+				})
+			}
 		case "profile":
 			profile := schema.Profile{
 				Meta: "Your user profile",
 			}
 			profile.User = &schema.User{}
 
-			walk(d.Name(), logger, func(name string, dat io.Reader) {
+			err = walk(d.Name(), func(name string, dat io.Reader) {
 				switch {
 				case name == "about.html":
-					bio, _ := parser.ParseBio(dat)
+					bio, err := parser.ParseBio(dat)
+					if err != nil {
+						logger.Printf("error parsing %s, profile.json will be incomplete", name)
+						return
+					}
+					logger.Printf("parsed %s", name)
 					profile.User.Bio = bio
 				case name == "profile.html":
-					parser.ParseUserProfile(dat, &profile)
+					err = parser.ParseUserProfile(dat, &profile)
+					if err != nil {
+						logger.Printf("error parsing %s, profile.json will be incomplete", name)
+						return
+					}
+					logger.Printf("parsed %s", name)
 				case name == "publications.html":
-					parser.ParsePublications(dat, &profile)
+					err = parser.ParsePublications(dat, &profile)
+					if err != nil {
+						logger.Printf("error parsing %s, profile.json will be incomplete", name)
+						return
+					}
+					logger.Printf("parsed %s", name)
 				case name == "memberships.html":
-					parser.ParseMemberships(dat, &profile)
+					err = parser.ParseMemberships(dat, &profile)
+					if err != nil {
+						logger.Printf("error parsing %s, profile.json will be incomplete", name)
+						return
+					}
+					logger.Printf("parsed %s", name)
 				case strings.HasPrefix(name, "charges-") && strings.HasSuffix(name, ".html"):
-					parser.ParseMembershipCharges(dat, &profile)
+					err = parser.ParseMembershipCharges(dat, &profile)
+					if err != nil {
+						logger.Printf("error parsing %s, profile.json will be incomplete", name)
+						return
+					}
+					logger.Printf("parsed %s", name)
 				default:
 					logger.Printf("skipped profile/%s: not supported", name)
 				}
 			})
 
-			write("profile.json", logger, profile)
+			if err != nil {
+				write("profile.json", profile)
+			}
 		default:
-			logger.Printf("skipped %s: not supported", d.Name())
+			logger.Printf("%s isn't supported, skipping", d.Name())
 		}
 	}
 
-	if *verbose == true {
-		fmt.Print(&buf)
+	if *withImages {
+		downloadImages(util.GetQueuedImages())
+	} else {
+		logger.Printf("not downloading images, use -withImages if you want to download images")
+	}
+
+	if *verbose {
+		fmt.Print(&logbuf)
 	}
 }

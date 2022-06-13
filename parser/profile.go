@@ -100,10 +100,7 @@ func ParseUserProfile(dat io.Reader, profile *schema.Profile) error {
 			case c.IsElement("h3") && c.HasClass("p-name"):
 				profile.User.Name = c.Text()
 			case c.IsElement("img") && c.HasClass("u-photo"):
-				img := schema.Image{
-					Source: c.Attrs["src"],
-				}
-				profile.User.ProfilePic = &img
+				profile.User.ProfilePic = c.ExtractImage()
 			case c.IsElement("h4") && c.Text() == "Account info":
 				parseAccountInfo(c.NextSiblingElement("ul"), profile)
 			case c.IsElement("h4") && c.Text() == "Connected accounts":

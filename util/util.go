@@ -16,13 +16,29 @@ import (
 )
 
 var SPACE_RE *regexp.Regexp = regexp.MustCompile(`\s+`)
+var DL_QUEUE map[string]bool
+
+func init() {
+	DL_QUEUE = map[string]bool{}
+}
+
+// GetQueuedImages returns a slice of image IDs that need to be downloaded
+func GetQueuedImages() (q []string) {
+	q = []string{}
+
+	for id := range DL_QUEUE {
+		q = append(q, id)
+	}
+
+	return
+}
 
 // ParseMediumId Parses post ID out of a Medium URL. Links to all Medium posts
 // end with a unique value that represents its ID:
 // 	https://medium.com/p/my-slug-5940ded906e7 -> 5940ded906e7
 // 	https://medium.com/p/5940ded906e7         -> 5940ded906e7
 func ParseMediumId(s string) string {
-	url, err := url.Parse(s)
+	u, err := url.Parse(s)
 	if err != nil {
 		return ""
 	}
@@ -30,12 +46,12 @@ func ParseMediumId(s string) string {
 	re1 := regexp.MustCompile("-([a-z0-9]+)$")
 	re2 := regexp.MustCompile(`\/p\/([a-z0-9]+)$`)
 
-	m := re1.FindStringSubmatch(url.Path)
+	m := re1.FindStringSubmatch(u.Path)
 	if len(m) >= 2 {
 		return m[1]
 	}
 
-	m = re2.FindStringSubmatch(url.Path)
+	m = re2.FindStringSubmatch(u.Path)
 	if len(m) >= 2 {
 		return m[1]
 	}
@@ -49,17 +65,17 @@ func ParseMediumId(s string) string {
 // Caveat: sometimes username.medium.com is not username at all but we will
 // ignore this fact for now.
 func ParseMediumUsername(s string) string {
-	url, err := url.Parse(s)
+	u, err := url.Parse(s)
 	if err != nil {
 		return ""
 	}
 
-	p := strings.Split(url.Path, "/")
+	p := strings.Split(u.Path, "/")
 	if len(p) > 1 && strings.HasPrefix(p[1], "@") {
 		return strings.TrimPrefix(p[1], "@")
 	}
 
-	h := strings.Split(url.Host, ".")
+	h := strings.Split(u.Host, ".")
 	if len(h) > 2 {
 		return h[0]
 	}
@@ -225,20 +241,37 @@ func (n *Node) Markup() (markup []schema.Markup) {
 
 // Extract extracts image metadata from a given Node
 func (n *Node) ExtractImage() (img *schema.Image) {
-	for c := n.FirstChild; c != nil; c = c.NextSibling {
-		if c.IsElement("img") == false {
-			continue
-		}
+	var c *Node
+	if n.IsElement("img") {
+		c = n
+	} else {
+		c = n.FirstChildElement("img")
+	}
 
-		return &schema.Image{
-			Name:   c.Attrs["data-image-id"],
-			Width:  c.Attrs["data-width"],
-			Height: c.Attrs["data-height"],
-			Source: c.Attrs["src"],
+	if c == nil {
+		return nil
+	}
+
+	name := ""
+	if c.Attrs["data-image-id"] != "" {
+		name = c.Attrs["data-image-id"]
+	} else {
+		u, err := url.Parse(c.Attrs["src"])
+		if err == nil {
+			p := strings.Split(u.Path, "/")
+			name = p[len(p)-1]
 		}
 	}
 
-	return nil
+	// Queue image for download
+	DL_QUEUE[name] = true
+
+	return &schema.Image{
+		Name:   name,
+		Width:  c.Attrs["data-width"],
+		Height: c.Attrs["data-height"],
+		Source: c.Attrs["src"],
+	}
 }
 
 // ParseGrafs parses a give Node and extracts all grafs, together with their markups.
