@@ -20,3 +20,6 @@
 # Local testing data
 data/
 out/
+
+# Builds
+build/

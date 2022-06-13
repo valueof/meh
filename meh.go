@@ -19,10 +19,13 @@ import (
 	"github.com/valueof/meh/util"
 )
 
+var VERSION string = "0.1"
+
 var input *string
 var output *string
 var verbose *bool
 var withImages *bool
+var version *bool
 var logger *log.Logger
 var logbuf bytes.Buffer
 
@@ -30,6 +33,7 @@ func init() {
 	input = flag.String("in", "", "path to the (uncompressed) medium archive")
 	output = flag.String("out", "", "output directory")
 	verbose = flag.Bool("verbose", false, "whether to print logs to stdout")
+	version = flag.Bool("version", false, "print version and exit")
 	withImages = flag.Bool("withImages", false, "whether to download images from medium cdn")
 	logger = log.New(&logbuf, "meh: ", log.Lmsgprefix)
 }
@@ -130,9 +134,14 @@ func downloadImages(images []string) {
 
 func main() {
 	flag.Parse()
+	if *version {
+		fmt.Printf("meh %s\n", VERSION)
+		os.Exit(0)
+	}
+
 	if *input == "" || *output == "" {
 		flag.Usage()
-		return
+		os.Exit(1)
 	}
 
 	dirs, err := ioutil.ReadDir(*input)
