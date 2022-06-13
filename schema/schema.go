@@ -63,11 +63,11 @@ type Highlights struct {
 }
 
 type Image struct {
-	Name   string `json:"name"`
-	Source string `json:"source"`
-	Alt    string `json:"alt"`
-	Height string `json:"height"`
-	Width  string `json:"width"`
+	Name   string `json:"name,omitempty"`
+	Source string `json:"source,omitempty"`
+	Alt    string `json:"alt,omitempty"`
+	Height string `json:"height,omitempty"`
+	Width  string `json:"width,omitempty"`
 }
 
 type InnerSection struct {
@@ -111,12 +111,37 @@ type Markup struct {
 	Href  string     `json:"href,omitempty"`
 }
 
+type Membership struct {
+	Id        string  `json:"id"`
+	StartedAt string  `json:"startedAt,omitempty"`
+	EndedAt   string  `json:"endedAt,omitempty"`
+	Amount    float64 `json:"amount"`
+	Type      string  `json:"type,omitempty"`
+}
+
+type MembershipCharge struct {
+	CreatedAt string  `json:"createdAt"`
+	Amount    float64 `json:"amount"`
+}
+
 type Post struct {
 	Id          string    `json:"id"`
 	Url         string    `json:"url"`
 	Title       string    `json:"title"`
 	PublishedAt string    `json:"publishedAt,omitempty"`
 	Content     []Section `json:"content,omitempty"`
+}
+
+type Profile struct {
+	Meta              string                   `json:"meta,omitempty"`
+	User              *User                    `json:"user"`
+	Email             string                   `json:"email,omitempty"`
+	PastEmails        []string                 `json:"pastEmails,omitempty"`
+	MembershipCharges []MembershipCharge       `json:"membershipCharges,omitempty"`
+	Memberships       []Membership             `json:"memberships,omitempty"`
+	SocialAccounts    map[string]SocialAccount `json:"socialAccounts,omitempty"`
+	Editor            []Publication            `json:"editor,omitempty"`
+	Writer            []Publication            `json:"writer,omitempty"`
 }
 
 type Publication struct {
@@ -146,6 +171,13 @@ type Sessions struct {
 	Sessions []Session `json:"sessions"`
 }
 
+type SocialAccount struct {
+	Id    string `json:"id,omitempty"`
+	Url   string `json:"url,omitempty"`
+	Email string `json:"email,omitempty"`
+	Name  string `json:"name,omitempty"`
+}
+
 type Tag struct {
 	Name string `json:"name"`
 	Url  string `json:"url"`
@@ -162,9 +194,13 @@ type Topics struct {
 }
 
 type User struct {
-	Name     string `json:"name,omitempty"`
-	Username string `json:"username"`
-	Url      string `json:"url"`
+	CreatedAt  string `json:"createdAt,omitempty"`
+	Id         string `json:"id,omitempty"`
+	Name       string `json:"name,omitempty"`
+	Bio        string `json:"bio,omitempty"`
+	Username   string `json:"username"`
+	Url        string `json:"url"`
+	ProfilePic *Image `json:"profilePic,omitempty"`
 }
 
 type Users struct {

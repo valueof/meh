@@ -311,6 +311,28 @@ func (n *Node) IsElement(name string) bool {
 	return n.Type == html.ElementNode && n.Data == name
 }
 
+// NextSiblingElement returns next sibling node with type html.ElementNode and a given tag name.
+// Returns nil if no such element can be found.
+func (n *Node) NextSiblingElement(name string) *Node {
+	for c := n.NextSibling; c != nil; c = c.NextSibling {
+		if c.IsElement(name) {
+			return c
+		}
+	}
+	return nil
+}
+
+// FirstChildElement returns first child node with type html.ElementNode and a given tag name.
+// Returns nil if no such element can be found.
+func (n *Node) FirstChildElement(name string) *Node {
+	for c := n.FirstChild; c != nil; c = c.NextSibling {
+		if c.IsElement(name) {
+			return c
+		}
+	}
+	return nil
+}
+
 // IsElement returns true if the Node contains a given class
 func (n *Node) HasClass(name string) bool {
 	if n.Type != html.ElementNode {

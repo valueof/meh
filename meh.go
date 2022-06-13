@@ -311,6 +311,31 @@ func main() {
 				Meta:       "Your highlights",
 				Highlights: highlights,
 			})
+		case "profile":
+			profile := schema.Profile{
+				Meta: "Your user profile",
+			}
+			profile.User = &schema.User{}
+
+			walk(d.Name(), logger, func(name string, dat io.Reader) {
+				switch {
+				case name == "about.html":
+					bio, _ := parser.ParseBio(dat)
+					profile.User.Bio = bio
+				case name == "profile.html":
+					parser.ParseUserProfile(dat, &profile)
+				case name == "publications.html":
+					parser.ParsePublications(dat, &profile)
+				case name == "memberships.html":
+					parser.ParseMemberships(dat, &profile)
+				case strings.HasPrefix(name, "charges-") && strings.HasSuffix(name, ".html"):
+					parser.ParseMembershipCharges(dat, &profile)
+				default:
+					logger.Printf("skipped profile/%s: not supported", name)
+				}
+			})
+
+			write("profile.json", logger, profile)
 		default:
 			logger.Printf("skipped %s: not supported", d.Name())
 		}
