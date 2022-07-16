@@ -20,9 +20,10 @@
 # Local testing data
 data/
 out/
+tmp/
 
 # Builds
 build/
 
-# OS
+# OS stuff
 .DS_Store
