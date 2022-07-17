@@ -4,14 +4,16 @@ This tool transforms Medium's default data export format (HTML) into JSON. This 
 
 #### Usage
 ```
-$ go run . -in=/path/to/archive -out=/path/to/out
+$ meh -dir=/path/to/archive -out=/path/to/out
 ```
 
 #### Flags
 
 ```
--in string
-    path to the (uncompressed) medium archive
+-dir string
+    path to the uncompressed medium archive
+-zip string
+    path to the compressed medium archive    
 -out string
     output directory
 -verbose
