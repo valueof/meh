@@ -428,7 +428,7 @@ func UnzipArchive(src string, dest string) (err error) {
 
 		if !f.FileInfo().IsDir() {
 			p := filepath.Join(dest, f.Name)
-			os.MkdirAll(filepath.Dir(p), 0777)
+			os.MkdirAll(filepath.Dir(p), 0600)
 			f, err := os.OpenFile(p, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
 			if err != nil {
 				return err

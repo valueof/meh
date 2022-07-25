@@ -10,6 +10,7 @@ import (
 
 	"github.com/valueof/meh/formatters"
 	"github.com/valueof/meh/parser"
+	http "github.com/valueof/meh/server"
 	"github.com/valueof/meh/util"
 )
 
@@ -47,7 +48,7 @@ func run() error {
 	}
 
 	if *server != "" {
-		RunHTTPServer(*server)
+		http.RunHTTPServer(*server)
 		return nil
 	}
 
