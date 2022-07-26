@@ -35,9 +35,13 @@
             .wrapper {
                 display: flex;
                 flex-direction: column;
-                justify-content: space-between;
+                justify-content: center;
                 width: 80%;
                 margin: 0 auto;
+            }
+
+            .error {
+                text-align: center;
             }
 
             form {
@@ -80,7 +84,6 @@
 
             footer {
                 display: flex;
-                margin-bottom: 50px;
                 font-size: 80%;
                 justify-content: space-between;
             }
@@ -93,17 +96,20 @@
                 {{template "page" .}}
             </div>
 
-            <footer>
-                <span>
-                    <a href="#" title="Ways to get help">Help</a>&nbsp;|&nbsp;
-                    <a href="https://github.com/valueof/meh" title="Source code on GitHub">Source Code</a>&nbsp;|&nbsp;
-                    <a href="#" title="Our privacy statement">Privacy</a>
-                </span>
+            {{if .SkipFooter}}
+            {{else}}
+                <footer>
+                    <span>
+                        <a href="#" title="Ways to get help">Help</a>&nbsp;|&nbsp;
+                        <a href="https://github.com/valueof/meh" title="Source code on GitHub">Source Code</a>&nbsp;|&nbsp;
+                        <a href="#" title="Our privacy statement">Privacy</a>
+                    </span>
 
-                <span>
-                    This website isn't affiliated with <a href="https://medium.com">Medium</a> (website) or <em>A Medium Corporation</em> (company)
-                </span>
-            </footer>
+                    <span>
+                        This website isn't affiliated with <a href="https://medium.com">Medium</a> (website) or <em>A Medium Corporation</em> (company)
+                    </span>
+                </footer>
+            {{end}}
         </div>
     </body>
 </html>

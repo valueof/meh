@@ -5,9 +5,23 @@ import (
 )
 
 func notFound(w http.ResponseWriter, r *http.Request) {
-	// TK
+	data := pageMeta{}
+	data.Title = "[meh] Page Not Found"
+	data.SkipFooter = true
+
+	render(w, r, "404.html", data)
+}
+
+type internalServerErrorData struct {
+	RequestID string
+	pageMeta
 }
 
 func internalServerError(w http.ResponseWriter, r *http.Request) {
-	// TK
+	data := internalServerErrorData{}
+	data.Title = "[meh] Internal Server Error"
+	data.SkipFooter = true
+	data.RequestID = getRequestIDFromContext(r.Context())
+
+	render(w, r, "500.html", data)
 }

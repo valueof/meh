@@ -25,7 +25,8 @@ const (
 var templates embed.FS
 
 type pageMeta struct {
-	Title string
+	Title      string
+	SkipFooter bool
 }
 
 func render(w http.ResponseWriter, r *http.Request, name string, data any) {
