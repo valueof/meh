@@ -102,8 +102,8 @@ func RunHTTPServer(addr string) {
 
 	router := http.NewServeMux()
 	router.HandleFunc("/", homepage)
-	router.HandleFunc("/upload", upload)
-	router.HandleFunc("/wait", wait)
+	router.HandleFunc("/upload/", upload)
+	router.HandleFunc("/result/", result)
 
 	s := &http.Server{
 		ReadTimeout:  5 * time.Second,

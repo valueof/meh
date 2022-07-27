@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 type pageMeta struct {
@@ -124,7 +125,7 @@ func upload(w http.ResponseWriter, r *http.Request) {
 
 		go unzipAndParse(hashsum, logger)
 
-		url := fmt.Sprintf("/wait?h=%s", hashsum)
+		url := fmt.Sprintf("/result/%s", hashsum)
 		http.Redirect(w, r, url, http.StatusFound)
 	} else {
 		// Some other error, run around in panic
@@ -133,12 +134,12 @@ func upload(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func wait(w http.ResponseWriter, r *http.Request) {
+func result(w http.ResponseWriter, r *http.Request) {
 	logger := getLoggerFromContext(r.Context())
 
-	hashsum := r.URL.Query().Get("h")
+	hashsum := strings.TrimPrefix(r.URL.Path, "/result/")
 	if hashsum == "" {
-		notFound(w, r)
+		http.Redirect(w, r, "/", http.StatusMovedPermanently)
 		return
 	}
 
@@ -182,8 +183,9 @@ func wait(w http.ResponseWriter, r *http.Request) {
 		render(w, r, "fetch.html", pageMeta{
 			Title:      "[meh] Downloading...",
 			SkipFooter: true,
-			Refresh:    fmt.Sprintf("0;url=/wait?h=%s&dl", hashsum),
+			Refresh:    fmt.Sprintf("0;url=/result/%s/?dl", hashsum),
 		})
+		return
 	}
 
 	render(w, r, "wait.html", pageMeta{
