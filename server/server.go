@@ -24,10 +24,7 @@ const (
 //go:embed html
 var templates embed.FS
 
-type pageMeta struct {
-	Title      string
-	SkipFooter bool
-}
+var tasks TaskPool
 
 func render(w http.ResponseWriter, r *http.Request, name string, data any) {
 	ctx := r.Context()
@@ -100,9 +97,13 @@ func RunHTTPServer(addr string) {
 		logger.Fatalf("Can't proceed")
 	}
 
+	logger.Println("Creating task pool")
+	tasks = TaskPool{pool: make(map[string]taskStatus)}
+
 	router := http.NewServeMux()
 	router.HandleFunc("/", homepage)
-	router.HandleFunc("/convert", convert)
+	router.HandleFunc("/upload", upload)
+	router.HandleFunc("/wait", wait)
 
 	s := &http.Server{
 		ReadTimeout:  5 * time.Second,

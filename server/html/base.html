@@ -4,6 +4,11 @@
     <head>
         <meta charset="UTF-8">
         <title>{{.Title}}</title>
+
+        {{if .Refresh}}
+            <meta http-equiv="refresh" content="{{.Refresh}}">
+        {{end}}
+
         <style type="text/css">
             .u-block { display: block !important; }
             .u-middle { display: flex !important; align-items: center !important; }
