@@ -52,6 +52,11 @@ func upload(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	logger := getLoggerFromContext(ctx)
 
+	if r.Method != "POST" {
+		http.Redirect(w, r, "/", http.StatusMovedPermanently)
+		return
+	}
+
 	err := r.ParseMultipartForm(32 << 20)
 	if err != nil {
 		logger.Printf("ParseForm() err: %v", err)
