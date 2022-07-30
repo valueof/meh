@@ -10,6 +10,7 @@ import (
 
 	"github.com/valueof/meh/formatters"
 	"github.com/valueof/meh/parser"
+	http "github.com/valueof/meh/server"
 	"github.com/valueof/meh/util"
 )
 
@@ -21,6 +22,7 @@ var output *string
 var verbose *bool
 var withImages *bool
 var version *bool
+var server *string
 var logger *log.Logger
 var logbuf bytes.Buffer
 
@@ -28,6 +30,7 @@ func init() {
 	dir = flag.String("dir", "", "path to the uncompressed medium archive")
 	zip = flag.String("zip", "", "path to the compressed medium archive")
 	output = flag.String("out", "", "output directory")
+	server = flag.String("server", "", "run web version of meh on provided address")
 	verbose = flag.Bool("verbose", false, "whether to print logs to stdout")
 	version = flag.Bool("version", false, "print version and exit")
 	withImages = flag.Bool("withImages", false, "whether to download images from medium cdn")
@@ -41,6 +44,11 @@ func run() error {
 
 	if *version {
 		fmt.Printf("meh %s\n", VERSION)
+		return nil
+	}
+
+	if *server != "" {
+		http.RunHTTPServer(*server)
 		return nil
 	}
 

@@ -1,0 +1,37 @@
+{{define "page"}}
+    <p class="kicker">
+        From the people who brought you the original Medium export tool but never made it produce anything but semi-random HTML
+    </p>
+
+    <header class="u-yellow">
+        <strong>Medium Export Helper:</strong> Convert you Medium archive into JSON!
+    </header>
+
+    <form class="u-bordered" method="post" name="convertArchive" action="/upload/" enctype="multipart/form-data">
+        <div class="step u-middle">
+            <label><strong>Step 1.</strong> Download your Medium archive: <a target="_blank" href="http://medium.com/me/export">medium.com/me/export</a></label>
+        </div>
+
+        <div class="step u-middle">
+            <label for="archive"><strong>Step 2.</strong> Select the archive:</label>
+            <input class="u-yellow u-bordered" type="file" id="archive" name="archive" accept="application/zip" required>
+        </div>
+
+        <div class="step u-block">
+            <label><strong>Step 3.</strong> Pick your preferences:</label>
+            <ul>
+                <li class="u-middle">
+                    <input type="checkbox" id="withImages" name="withImages" checked /><label for="withImages">With images</label>&nbsp;(by default Medium doesn’t include images in their export but we can download them for you)
+                </li>
+
+                <li class="u-middle u-disabled">
+                    <input type="checkbox" id="withMarkdown" name="withMarkdown" disabled /><label for="withMarkdown">Convert stories into Markdown (coming later)</label>
+                </li>
+            </ul>
+        </div>
+
+        <div class="step">
+            <button class="u-yellow u-bordered" type="submit">Convert</button>
+        </div>
+    </form>
+{{end}}

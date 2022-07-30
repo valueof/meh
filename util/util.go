@@ -428,10 +428,10 @@ func UnzipArchive(src string, dest string) (err error) {
 
 		if !f.FileInfo().IsDir() {
 			p := filepath.Join(dest, f.Name)
-			os.MkdirAll(filepath.Dir(p), 0777)
+			os.MkdirAll(filepath.Dir(p), 0700)
 			f, err := os.OpenFile(p, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
 			if err != nil {
-				return err
+				continue
 			}
 			defer f.Close()
 
@@ -440,6 +440,50 @@ func UnzipArchive(src string, dest string) (err error) {
 				return err
 			}
 		}
+	}
+
+	return nil
+}
+
+func ZipArchive(src string, dest string) (err error) {
+	out, err := os.Create(dest)
+	if err != nil {
+		return nil
+	}
+	defer out.Close()
+
+	w := zip.NewWriter(out)
+	err = addToArchive(w, src, "")
+	if err != nil {
+		return
+	}
+
+	return w.Close()
+}
+
+func addToArchive(w *zip.Writer, src string, rel string) error {
+	files, err := ioutil.ReadDir(src)
+	if err != nil {
+		return err
+	}
+
+	for _, f := range files {
+		if f.IsDir() {
+			addToArchive(w, filepath.Join(src, f.Name()), filepath.Join(rel, f.Name()))
+			continue
+		}
+
+		dat, err := ioutil.ReadFile(filepath.Join(src, f.Name()))
+		if err != nil {
+			continue
+		}
+
+		zipfile, err := w.Create(filepath.Join(rel, f.Name()))
+		if err != nil {
+			continue
+		}
+
+		zipfile.Write(dat)
 	}
 
 	return nil

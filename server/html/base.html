@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>{{.Title}}</title>
+
+        {{if .Refresh}}
+            <meta http-equiv="refresh" content="{{.Refresh}}">
+        {{end}}
+
+        <style type="text/css">
+            .u-block { display: block !important; }
+            .u-middle { display: flex !important; align-items: center !important; }
+            .u-yellow { background-color: rgb(255,244,206) !important; }
+            .u-disabled { color: rgb(99,99,99) !important; }
+            .u-bordered { border: solid 1px rgb(99,99,99) !important; border-radius: 3px !important; }
+
+            html, body, .wrapper {
+                height: 100%;
+            }
+
+            body {
+                margin: 0;
+                font-size: 16pt;
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            }
+
+            header {
+                display: inline-block;
+                padding: 1px 5px;
+            }
+
+            .kicker {
+                margin-top: 50px;
+                font-size: 80%;
+                font-style: italic;
+            }
+
+            .wrapper {
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                width: 80%;
+                margin: 0 auto;
+            }
+
+            .error {
+                text-align: center;
+            }
+
+            form {
+                margin: 20px 0;
+                padding: 20px;
+            }
+
+            form .step {
+                margin-bottom: 20px;
+            }
+
+            form .step:last-child {
+                margin-bottom: 0;
+            }
+
+            .step > label {
+                margin: 0 5px 5px 0;
+            }
+
+            .step > ul {
+                display: block;
+                list-style-type: none;
+            }
+
+            .step > ul label {
+                margin-left: 5px;
+            }
+
+            .step > ul li {
+                margin-bottom: 10px;
+            }
+
+            form input {
+                padding: 5px;
+            }
+
+            form button {
+                font-size: 16pt;
+            }
+
+            footer {
+                display: flex;
+                font-size: 80%;
+                justify-content: space-between;
+            }
+        </style>
+    </head>
+
+    <body>
+        <div class="wrapper">
+            <div>
+                {{template "page" .}}
+            </div>
+
+            {{if .SkipFooter}}
+            {{else}}
+                <footer>
+                    <span>
+                        <a href="https://github.com/valueof/meh/issues" title="Ways to get help">Help</a>&nbsp;|&nbsp;
+                        <a href="https://github.com/valueof/meh" title="Source code on GitHub">Source Code</a>&nbsp;|&nbsp;
+                        <a href="https://github.com/valueof/meh/wiki/Privacy" title="Our privacy statement">Privacy</a>
+                    </span>
+
+                    <span>
+                        This website isn't affiliated with <a href="https://medium.com">Medium</a> (website) or <em>A Medium Corporation</em> (company)
+                    </span>
+                </footer>
+            {{end}}
+        </div>
+    </body>
+</html>
