@@ -103,11 +103,11 @@ func upload(w http.ResponseWriter, r *http.Request) {
 	_, err = os.Stat(dest)
 	if err == nil {
 		// File already exists, check whether we need to reprocess it and redirect
-		if _, ok := tasks.Status(hashsum); !ok {
+		if t, ok := tasks.Status(hashsum); !ok && t != TASK_RUNNING {
 			go unzipAndParse(hashsum, logger)
 		}
 
-		url := fmt.Sprintf("/wait?h=%s", hashsum)
+		url := fmt.Sprintf("/result/%s", hashsum)
 		http.Redirect(w, r, url, http.StatusFound)
 	} else if errors.Is(err, os.ErrNotExist) {
 		// File doesn't exist, upload and send for processing
@@ -149,8 +149,7 @@ func result(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.URL.Query().Has("dl") {
-		// TODO: use output file here
-		file, err := os.Open(filepath.Join(INBOUND_DIR, hashsum, "upload.zip"))
+		file, err := os.Open(filepath.Join(INBOUND_DIR, hashsum, "output.zip"))
 		if err != nil {
 			logger.Printf("Couldn't read file for download: %v\n", err)
 			notFound(w, r)
@@ -190,6 +189,11 @@ func result(w http.ResponseWriter, r *http.Request) {
 			SkipFooter: true,
 			Refresh:    fmt.Sprintf("0;url=/result/%s/?dl", hashsum),
 		})
+		return
+	}
+
+	if st == TASK_ERROR {
+		internalServerError(w, r)
 		return
 	}
 
