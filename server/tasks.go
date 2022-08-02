@@ -1,6 +1,7 @@
 package server
 
 import (
+	"archive/zip"
 	"errors"
 	"fmt"
 	"log"
@@ -16,9 +17,10 @@ import (
 type taskStatus int
 
 const (
-	TASK_RUNNING taskStatus = 1
-	TASK_DONE    taskStatus = 2
-	TASK_ERROR   taskStatus = 3
+	TaskRunning      taskStatus = 1
+	TaskDone         taskStatus = 2
+	TaskErrUnknown   taskStatus = 3
+	TaskErrZipFormat taskStatus = 4
 )
 
 type TaskPool struct {
@@ -30,7 +32,7 @@ func (t *TaskPool) Create(h string) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
-	t.pool[h] = TASK_RUNNING
+	t.pool[h] = TaskRunning
 }
 
 func (t *TaskPool) Status(h string) (taskStatus, bool) {
@@ -49,19 +51,25 @@ func (t *TaskPool) Complete(h string) error {
 	defer t.mu.Unlock()
 
 	if _, ok := t.pool[h]; ok {
-		t.pool[h] = TASK_DONE
+		t.pool[h] = TaskDone
 		return nil
 	}
 
 	return errors.New("can't complete task that doesn't exist")
 }
 
-func (t *TaskPool) Error(h string) error {
+func (t *TaskPool) Error(h string, e error) error {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
 	if _, ok := t.pool[h]; ok {
-		t.pool[h] = TASK_ERROR
+		switch e {
+		case zip.ErrFormat:
+			t.pool[h] = TaskErrZipFormat
+		default:
+			t.pool[h] = TaskErrUnknown
+		}
+
 		return nil
 	}
 
@@ -76,7 +84,7 @@ func unzipAndParse(h string, withImages bool, logger *log.Logger) {
 	err := util.UnzipArchive(zip, tmp)
 	if err != nil {
 		logger.Printf("UnzipArchive(%s, %s): %v", zip, tmp, err)
-		tasks.Error(h)
+		tasks.Error(h, err)
 		return
 	}
 
@@ -93,7 +101,7 @@ func unzipAndParse(h string, withImages bool, logger *log.Logger) {
 	fmt.Println(input)
 	if err != nil {
 		logger.Printf("filepath.Abs(): %v", err)
-		tasks.Error(h)
+		tasks.Error(h, err)
 		return
 	}
 
@@ -103,7 +111,7 @@ func unzipAndParse(h string, withImages bool, logger *log.Logger) {
 	err = p.Parse()
 	if err != nil {
 		logger.Printf("parser.Parse(): %v", err)
-		tasks.Error(h)
+		tasks.Error(h, err)
 		return
 	}
 
@@ -120,7 +128,7 @@ func unzipAndParse(h string, withImages bool, logger *log.Logger) {
 	err = util.ZipArchive(output, outzip)
 	if err != nil {
 		logger.Printf("util.ZipArchive(%s, %s): %v", output, outzip, err)
-		tasks.Error(h)
+		tasks.Error(h, err)
 		return
 	}
 

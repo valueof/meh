@@ -17,8 +17,9 @@ type pageMeta struct {
 	Refresh    string
 }
 
-type internalServerErrorData struct {
-	RequestID string
+type errorPageData struct {
+	RequestID    string
+	ErrorMessage string
 	pageMeta
 }
 
@@ -31,10 +32,20 @@ func notFound(w http.ResponseWriter, r *http.Request) {
 }
 
 func internalServerError(w http.ResponseWriter, r *http.Request) {
-	data := internalServerErrorData{}
+	data := errorPageData{}
 	data.Title = "[meh] Internal Server Error"
 	data.SkipFooter = true
 	data.RequestID = getRequestIDFromContext(r.Context())
+
+	render(w, r, "500.html", data)
+}
+
+func serverError(w http.ResponseWriter, r *http.Request, m string) {
+	data := errorPageData{}
+	data.Title = "[meh] Something went wrong"
+	data.SkipFooter = true
+	data.RequestID = getRequestIDFromContext(r.Context())
+	data.ErrorMessage = m
 
 	render(w, r, "500.html", data)
 }
@@ -104,7 +115,7 @@ func upload(w http.ResponseWriter, r *http.Request) {
 	_, err = os.Stat(dest)
 	if err == nil {
 		// File already exists, check whether we need to reprocess it and redirect
-		if t, ok := tasks.Status(hashsum); !ok && t != TASK_RUNNING {
+		if t, ok := tasks.Status(hashsum); !ok && t != TaskRunning {
 			go unzipAndParse(hashsum, withImages, logger)
 		}
 
@@ -184,25 +195,24 @@ func result(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if st == TASK_DONE {
+	switch st {
+	case TaskDone:
 		render(w, r, "fetch.html", pageMeta{
 			Title:      "[meh] Downloading...",
 			SkipFooter: true,
 			Refresh:    fmt.Sprintf("0;url=/result/%s/?dl", hashsum),
 		})
-		return
-	}
-
-	if st == TASK_ERROR {
+	case TaskErrUnknown:
 		internalServerError(w, r)
-		return
+	case TaskErrZipFormat:
+		serverError(w, r, "The file we received wasn’t a valid zip file")
+	default:
+		render(w, r, "wait.html", pageMeta{
+			Title:      "[meh] Converting...",
+			SkipFooter: true,
+			Refresh:    "10",
+		})
 	}
-
-	render(w, r, "wait.html", pageMeta{
-		Title:      "[meh] Converting...",
-		SkipFooter: true,
-		Refresh:    "10",
-	})
 }
 
 func favicon(w http.ResponseWriter, r *http.Request) {

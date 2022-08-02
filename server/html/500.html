@@ -1,7 +1,19 @@
 {{define "page"}}
-    <div class="error">
+    <div class="error u-bordered u-marginBottom20">
         <p><span class="u-yellow">(✖╭╮✖)</span></p>
-        <p><strong>Internal Server Error</strong></p>
-        <p>You can <a href="https://github.com/valueof/meh/issues/new">file a bug</a> and include this request ID: <span class="u-yellow">{{.RequestID}}</span></p>
+
+        {{if .ErrorMessage}}
+            <p><strong>Something went wrong</strong></p>
+            <p>{{ .ErrorMessage }}</p>
+        {{else}}
+            <p><strong>Internal Server Error</strong></p>
+        {{end}}
     </div>
+
+    <footer>
+        <span>
+            <a href="/">Go Back</a>
+        </span>
+        <span>You can <a href="https://github.com/valueof/meh/issues/new">file a bug</a> and include this request ID: <span class="u-yellow">{{.RequestID}}</span>
+    </footer>
 {{end}}
