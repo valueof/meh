@@ -31,4 +31,8 @@ $ meh -dir=/path/to/archive -out=/path/to/out
 
 #### How To Help
 
-So far this has been tested only on my own data. If you want to help, head over to [medium.com/me/export](https://medium.com/me/export), export your data, run it through `meh`, and let me know if anything is broken by creating an issue. Thank you!
+So far this has been tested only on my own data. If you want to help, head over to [medium.com/me/export](https://medium.com/me/export), export your data, run it through `meh`, and let me know if anything is broken by creating an issue.
+
+You can also try Medium Export Helper on the web: [meh.antonkovalyov.com](https://meh.antonkovalyov.com)
+
+Thank you!
