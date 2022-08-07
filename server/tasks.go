@@ -3,7 +3,6 @@ package server
 import (
 	"archive/zip"
 	"errors"
-	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -17,10 +16,11 @@ import (
 type taskStatus int
 
 const (
-	TaskRunning      taskStatus = 1
-	TaskDone         taskStatus = 2
-	TaskErrUnknown   taskStatus = 3
-	TaskErrZipFormat taskStatus = 4
+	TaskRunning          taskStatus = 1
+	TaskDone             taskStatus = 2
+	TaskErrUnknown       taskStatus = 3
+	TaskErrZipFormat     taskStatus = 4
+	TaskErrArchiveFormat taskStatus = 5
 )
 
 type TaskPool struct {
@@ -66,6 +66,8 @@ func (t *TaskPool) Error(h string, e error) error {
 		switch e {
 		case zip.ErrFormat:
 			t.pool[h] = TaskErrZipFormat
+		case util.ErrArchiveRootNotFound:
+			t.pool[h] = TaskErrArchiveFormat
 		default:
 			t.pool[h] = TaskErrUnknown
 		}
@@ -96,9 +98,14 @@ func unzipAndParse(h string, withImages bool, logger *log.Logger) {
 		os.RemoveAll(tmp)
 	}()
 
-	input := util.FindArchiveRoot(tmp)
-	input, err = filepath.Abs(input)
-	fmt.Println(input)
+	root, err := util.FindArchiveRoot(tmp)
+	if err != nil {
+		logger.Printf("util.FindArchiveRoot(%s): %v", tmp, err)
+		tasks.Error(h, err)
+		return
+	}
+
+	input, err := filepath.Abs(root)
 	if err != nil {
 		logger.Printf("filepath.Abs(): %v", err)
 		tasks.Error(h, err)

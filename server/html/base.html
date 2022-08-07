@@ -10,6 +10,7 @@
         {{end}}
 
         <style type="text/css">
+            .u-hidden { display: none; }
             .u-block { display: block !important; }
             .u-middle { display: flex !important; align-items: center !important; }
             .u-yellow { background-color: rgb(255,244,206) !important; }
@@ -61,6 +62,14 @@
 
             form .step:last-child {
                 margin-bottom: 0;
+            }
+
+            form .stepError {
+                margin-left: 10px;
+                background-color: red;
+                color: white;
+                padding: 3px 5px;
+                border-radius: 3px;;
             }
 
             .step > label {

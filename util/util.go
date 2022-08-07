@@ -6,6 +6,7 @@ package util
 
 import (
 	"archive/zip"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -22,6 +23,10 @@ import (
 
 var SPACE_RE *regexp.Regexp = regexp.MustCompile(`\s+`)
 var DL_QUEUE map[string]bool
+
+var (
+	ErrArchiveRootNotFound = errors.New("meh: archive root not found")
+)
 
 func init() {
 	DL_QUEUE = map[string]bool{}
@@ -308,7 +313,7 @@ func (n *Node) ParseGrafs() []schema.Graf {
 	grafs := []schema.Graf{}
 
 	for g := n.FirstChild; g != nil; g = g.NextSibling {
-		if g.HasClass("graf") == false {
+		if !g.HasClass("graf") {
 			continue
 		}
 
@@ -491,7 +496,7 @@ func addToArchive(w *zip.Writer, src string, rel string) error {
 
 // FindArchiveRoot attempts to find where the actual archive starts
 // by looking for a README.html file. It only looks max one level deep.
-func FindArchiveRoot(dir string) string {
+func FindArchiveRoot(dir string) (string, error) {
 	hasReadme := func(d string) bool {
 		files, err := ioutil.ReadDir(d)
 		if err != nil {
@@ -508,22 +513,22 @@ func FindArchiveRoot(dir string) string {
 	}
 
 	if hasReadme(dir) {
-		return dir
+		return dir, nil
 	}
 
 	files, err := ioutil.ReadDir(dir)
 	if err != nil {
-		return ""
+		return "", err
 	}
 
 	for _, d := range files {
 		fp := filepath.Join(dir, d.Name())
 		if d.IsDir() && hasReadme(fp) {
-			return fp
+			return fp, nil
 		}
 	}
 
-	return ""
+	return "", ErrArchiveRootNotFound
 }
 
 // Collapses spaces into one. If the input string contains only

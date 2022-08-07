@@ -96,7 +96,6 @@ func upload(w http.ResponseWriter, r *http.Request) {
 		internalServerError(w, r)
 		return
 	}
-
 	defer file.Close()
 
 	h := sha256.New()
@@ -129,8 +128,8 @@ func upload(w http.ResponseWriter, r *http.Request) {
 			internalServerError(w, r)
 			return
 		}
-
 		defer upload.Close()
+
 		_, err = io.Copy(upload, file)
 		if err != nil {
 			logger.Printf("io.Copy err: %v", err)
@@ -139,7 +138,6 @@ func upload(w http.ResponseWriter, r *http.Request) {
 		}
 
 		logger.Printf("Uploaded %s", dest)
-
 		go unzipAndParse(hashsum, withImages, logger)
 
 		url := fmt.Sprintf("/result/%s", hashsum)
@@ -206,6 +204,8 @@ func result(w http.ResponseWriter, r *http.Request) {
 		internalServerError(w, r)
 	case TaskErrZipFormat:
 		serverError(w, r, "The file we received wasn’t a valid zip file")
+	case TaskErrArchiveFormat:
+		serverError(w, r, "The file we received wasn’t a valid Medium archive")
 	default:
 		render(w, r, "wait.html", pageMeta{
 			Title:      "[meh] Converting...",

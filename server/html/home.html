@@ -7,14 +7,20 @@
         <strong>Medium Export Helper:</strong> Convert you Medium archive into JSON!
     </header>
 
-    <form class="u-bordered" method="post" name="convertArchive" action="/upload/" enctype="multipart/form-data">
+    <form id="uploadForm" class="u-bordered" method="post" name="convertArchive" action="/upload/" enctype="multipart/form-data">
         <div class="step u-middle">
             <label><strong>Step 1.</strong> Download your Medium archive: <a target="_blank" href="http://medium.com/me/export">medium.com/me/export</a></label>
         </div>
 
         <div class="step u-middle">
             <label for="archive"><strong>Step 2.</strong> Select the archive:</label>
-            <input class="u-yellow u-bordered" type="file" id="archive" name="archive" accept="application/zip" required>
+            <input class="u-yellow u-bordered"
+                id="archive"
+                name="archive"
+                type="file" 
+                accept="application/zip"
+                required>
+            <span id="uploadError" class="stepError u-hidden">&larr; Please select a file to upload</span>
         </div>
 
         <div class="step u-block">
@@ -31,7 +37,70 @@
         </div>
 
         <div class="step">
-            <button class="u-yellow u-bordered" type="submit">Convert</button>
+            <button id="convert" class="u-yellow u-bordered" type="submit">Convert</button>
         </div>
     </form>
+
+    <script>
+        // Shows an inline error message (reverts to using alert if the required element
+        // isn't there). If the provided message is an empty string, hides the element.
+        const err = (msg) => {
+            const e = document.querySelector("#uploadError")
+            if (!e) {
+                if (msg) alert(msg)
+                return
+            }
+
+            if (!msg) {
+                e.classList.add("u-hidden")
+                return
+            }
+
+            e.innerHTML = "&larr; " + msg
+            e.classList.remove("u-hidden")
+        }
+
+        // Checks whether a file was selected for upload and whether it's not too big,
+        // mostly for better user experience. If this code doesn't run the server will
+        // return HTTP 413 (Request Entity Too Large)
+        document.addEventListener("DOMContentLoaded", (e) => {
+            if (!window.FileReader) {
+                // FileAPI isn't supported so default to no-js flow.
+                return
+            }
+
+            var form = document.querySelector("#uploadForm")
+            if (!form) {
+                return
+            }
+
+            form.addEventListener("submit", (e) => {
+                var archive = document.querySelector("#archive")
+                if (!archive || !archive.files) {
+                    // Either FileAPI isn't supported or the element isn't there for some reason,
+                    // default to no-js flow.
+                    return
+                }
+
+                if (!archive.files.length) {
+                    err("Please select a file.")
+                    e.preventDefault()
+                    return
+                }
+
+                if (archive.files[0].size > 10000000) {
+                    err("Your file is too large. Max: 10M")
+                    e.preventDefault()
+                    return
+                }
+
+                var btn = document.querySelector("#convert")
+                if (btn) {
+                    btn.innerHTML = "Uploading…"
+                    btn.setAttribute("disabled", "disabled")
+                    err("")
+                }
+            })
+        })
+    </script>
 {{end}}

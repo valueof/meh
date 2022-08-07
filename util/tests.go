@@ -19,19 +19,19 @@ func TestParser(d string, t *testing.T, fn func(io.Reader, io.Reader) bool) {
 
 		if strings.HasSuffix(f.Name(), ".html") {
 			in, err := os.Open(path.Join(d, f.Name()))
-			defer in.Close()
 			if err != nil {
 				t.Errorf("can't open %s", f.Name())
 			}
+			defer in.Close()
 
 			fout := strings.ReplaceAll(f.Name(), ".html", ".json")
 			out, err := os.Open(path.Join(d, fout))
-			defer out.Close()
 			if err != nil {
 				t.Errorf("can't open %s", fout)
 			}
+			defer out.Close()
 
-			if fn(in, out) == false {
+			if !fn(in, out) {
 				t.Errorf("%s is unmatched with %s", f.Name(), fout)
 			}
 		}

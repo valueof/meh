@@ -14,7 +14,7 @@ import (
 	"github.com/valueof/meh/util"
 )
 
-var VERSION string = "0.1"
+var VERSION string = "0.3"
 
 var dir *string
 var zip *string
@@ -74,7 +74,11 @@ func run() error {
 		}()
 
 		logger.Printf("extracted archive into %s", tmp)
-		input = util.FindArchiveRoot(tmp)
+		input, err = util.FindArchiveRoot(tmp)
+		if err != nil {
+			logger.Printf("FindArchiveRoot(%s): %v", tmp, err)
+			return err
+		}
 	case *dir != "":
 		input = *dir
 	}
