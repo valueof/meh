@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
 	"net/url"
 	"os"
@@ -531,8 +532,18 @@ func FindArchiveRoot(dir string) (string, error) {
 	return "", ErrArchiveRootNotFound
 }
 
+// GenerateReceiptNumber returns a pseudo-random string of letters and digits.
+func GenerateReceiptNumber() string {
+	var pool = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+	b := make([]rune, 5)
+	for i := range b {
+		b[i] = pool[rand.Intn(len(pool))]
+	}
+	return string(b)
+}
+
 // Collapses spaces into one. If the input string contains only
-// spaces returns an empty string. Can als reverse the Big Bang.
+// spaces returns an empty string. Can also reverse the Big Bang.
 func collapseSpace(s string) string {
 	ns := SPACE_RE.ReplaceAllString(s, " ")
 	if strings.TrimSpace(ns) != "" {

@@ -1,14 +1,17 @@
 package server
 
 import (
-	"crypto/sha256"
 	"errors"
 	"fmt"
 	"io"
+	"math/rand"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
+
+	"github.com/valueof/meh/util"
 )
 
 type pageMeta struct {
@@ -98,68 +101,60 @@ func upload(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	h := sha256.New()
-	io.TeeReader(file, h)
-	hashsum := fmt.Sprintf("%x", h.Sum(nil))
+	rand.Seed(time.Now().UnixNano())
 
-	dest := filepath.Join(INBOUND_DIR, hashsum)
+	receipt := util.GenerateReceiptNumber()
+	dest := filepath.Join(INBOUND_DIR, receipt)
 	err = os.Mkdir(dest, 0700)
-	if err != nil && !errors.Is(err, os.ErrExist) {
+
+	for err != nil {
+		if errors.Is(err, os.ErrExist) {
+			logger.Printf("Receipt number collision, need to generate a new one")
+			receipt = util.GenerateReceiptNumber()
+			dest = filepath.Join(INBOUND_DIR, receipt)
+			err = os.Mkdir(dest, 0700)
+			continue
+		}
+
 		logger.Printf("Failed to create holding directory %s: %v\n", dest, err)
 		internalServerError(w, r)
 		return
 	}
 
 	dest = filepath.Join(dest, "upload.zip")
-	_, err = os.Stat(dest)
-	if err == nil {
-		// File already exists, check whether we need to reprocess it and redirect
-		if t, ok := tasks.Status(hashsum); !ok && t != TaskRunning {
-			go unzipAndParse(hashsum, withImages, logger)
-		}
-
-		url := fmt.Sprintf("/result/%s", hashsum)
-		http.Redirect(w, r, url, http.StatusFound)
-	} else if errors.Is(err, os.ErrNotExist) {
-		// File doesn't exist, upload and send for processing
-		upload, err := os.Create(dest)
-		if err != nil {
-			logger.Printf("Couldn't create dest file: %v", err)
-			internalServerError(w, r)
-			return
-		}
-		defer upload.Close()
-
-		_, err = io.Copy(upload, file)
-		if err != nil {
-			logger.Printf("io.Copy err: %v", err)
-			internalServerError(w, r)
-			return
-		}
-
-		logger.Printf("Uploaded %s", dest)
-		go unzipAndParse(hashsum, withImages, logger)
-
-		url := fmt.Sprintf("/result/%s", hashsum)
-		http.Redirect(w, r, url, http.StatusFound)
-	} else {
-		// Some other error, run around in panic
-		logger.Printf("os.Stat returned an unexpected error: %v\n", err)
+	upload, err := os.Create(dest)
+	if err != nil {
+		logger.Printf("Couldn't create dest file: %v", err)
 		internalServerError(w, r)
+		return
 	}
+	defer upload.Close()
+
+	_, err = io.Copy(upload, file)
+	if err != nil {
+		logger.Printf("io.Copy err: %v", err)
+		internalServerError(w, r)
+		return
+	}
+
+	logger.Printf("Uploaded %s", dest)
+	go unzipAndParse(receipt, withImages, logger)
+
+	url := fmt.Sprintf("/result/%s", receipt)
+	http.Redirect(w, r, url, http.StatusFound)
 }
 
 func result(w http.ResponseWriter, r *http.Request) {
 	logger := getLoggerFromContext(r.Context())
 
-	hashsum := strings.TrimPrefix(r.URL.Path, "/result/")
-	if hashsum == "" {
+	receipt := strings.TrimPrefix(r.URL.Path, "/result/")
+	if receipt == "" {
 		http.Redirect(w, r, "/", http.StatusMovedPermanently)
 		return
 	}
 
 	if r.URL.Query().Has("dl") {
-		file, err := os.Open(filepath.Join(INBOUND_DIR, hashsum, "output.zip"))
+		file, err := os.Open(filepath.Join(INBOUND_DIR, receipt, "output.zip"))
 		if err != nil {
 			logger.Printf("Couldn't read file for download: %v\n", err)
 			notFound(w, r)
@@ -183,11 +178,11 @@ func result(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		go cleanup(hashsum, logger)
+		go cleanup(receipt, logger)
 		return
 	}
 
-	st, exists := tasks.Status(hashsum)
+	st, exists := tasks.Status(receipt)
 	if !exists {
 		notFound(w, r)
 		return
@@ -198,14 +193,16 @@ func result(w http.ResponseWriter, r *http.Request) {
 		render(w, r, "fetch.html", pageMeta{
 			Title:      "[meh] Downloading...",
 			SkipFooter: true,
-			Refresh:    fmt.Sprintf("0;url=/result/%s/?dl", hashsum),
+			Refresh:    fmt.Sprintf("0;url=/result/%s/?dl", receipt),
 		})
 	case TaskErrUnknown:
 		internalServerError(w, r)
 	case TaskErrZipFormat:
 		serverError(w, r, "The file we received wasn’t a valid zip file")
+		go cleanup(receipt, logger)
 	case TaskErrArchiveFormat:
 		serverError(w, r, "The file we received wasn’t a valid Medium archive")
+		go cleanup(receipt, logger)
 	default:
 		render(w, r, "wait.html", pageMeta{
 			Title:      "[meh] Converting...",

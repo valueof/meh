@@ -28,48 +28,48 @@ type TaskPool struct {
 	pool map[string]taskStatus
 }
 
-func (t *TaskPool) Create(h string) {
+func (t *TaskPool) Create(receipt string) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
-	t.pool[h] = TaskRunning
+	t.pool[receipt] = TaskRunning
 }
 
-func (t *TaskPool) Status(h string) (taskStatus, bool) {
+func (t *TaskPool) Status(receipt string) (taskStatus, bool) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
-	if v, ok := t.pool[h]; ok {
+	if v, ok := t.pool[receipt]; ok {
 		return v, true
 	}
 
 	return 0, false
 }
 
-func (t *TaskPool) Complete(h string) error {
+func (t *TaskPool) Complete(receipt string) error {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
-	if _, ok := t.pool[h]; ok {
-		t.pool[h] = TaskDone
+	if _, ok := t.pool[receipt]; ok {
+		t.pool[receipt] = TaskDone
 		return nil
 	}
 
 	return errors.New("can't complete task that doesn't exist")
 }
 
-func (t *TaskPool) Error(h string, e error) error {
+func (t *TaskPool) Error(receipt string, e error) error {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
-	if _, ok := t.pool[h]; ok {
+	if _, ok := t.pool[receipt]; ok {
 		switch e {
 		case zip.ErrFormat:
-			t.pool[h] = TaskErrZipFormat
+			t.pool[receipt] = TaskErrZipFormat
 		case util.ErrArchiveRootNotFound:
-			t.pool[h] = TaskErrArchiveFormat
+			t.pool[receipt] = TaskErrArchiveFormat
 		default:
-			t.pool[h] = TaskErrUnknown
+			t.pool[receipt] = TaskErrUnknown
 		}
 
 		return nil
@@ -78,15 +78,15 @@ func (t *TaskPool) Error(h string, e error) error {
 	return errors.New("can't error task that doesn't exist")
 }
 
-func unzipAndParse(h string, withImages bool, logger *log.Logger) {
-	tasks.Create(h)
+func unzipAndParse(receipt string, withImages bool, logger *log.Logger) {
+	tasks.Create(receipt)
 
-	zip := filepath.Join(INBOUND_DIR, h, "upload.zip")
-	tmp := filepath.Join(INBOUND_DIR, h, ".upload")
+	zip := filepath.Join(INBOUND_DIR, receipt, "upload.zip")
+	tmp := filepath.Join(INBOUND_DIR, receipt, ".upload")
 	err := util.UnzipArchive(zip, tmp)
 	if err != nil {
 		logger.Printf("UnzipArchive(%s, %s): %v", zip, tmp, err)
-		tasks.Error(h, err)
+		tasks.Error(receipt, err)
 		return
 	}
 
@@ -101,24 +101,24 @@ func unzipAndParse(h string, withImages bool, logger *log.Logger) {
 	root, err := util.FindArchiveRoot(tmp)
 	if err != nil {
 		logger.Printf("util.FindArchiveRoot(%s): %v", tmp, err)
-		tasks.Error(h, err)
+		tasks.Error(receipt, err)
 		return
 	}
 
 	input, err := filepath.Abs(root)
 	if err != nil {
 		logger.Printf("filepath.Abs(): %v", err)
-		tasks.Error(h, err)
+		tasks.Error(receipt, err)
 		return
 	}
 
-	output := filepath.Join(INBOUND_DIR, h, ".output")
+	output := filepath.Join(INBOUND_DIR, receipt, ".output")
 	w := formatters.NewJSONFormatter(output, *logger)
 	p := parser.NewParser(input, *logger, w)
 	err = p.Parse()
 	if err != nil {
 		logger.Printf("parser.Parse(): %v", err)
-		tasks.Error(h, err)
+		tasks.Error(receipt, err)
 		return
 	}
 
@@ -131,19 +131,19 @@ func unzipAndParse(h string, withImages bool, logger *log.Logger) {
 		os.RemoveAll(output)
 	}()
 
-	outzip := filepath.Join(INBOUND_DIR, h, "output.zip")
+	outzip := filepath.Join(INBOUND_DIR, receipt, "output.zip")
 	err = util.ZipArchive(output, outzip)
 	if err != nil {
 		logger.Printf("util.ZipArchive(%s, %s): %v", output, outzip, err)
-		tasks.Error(h, err)
+		tasks.Error(receipt, err)
 		return
 	}
 
-	tasks.Complete(h)
+	tasks.Complete(receipt)
 }
 
-func cleanup(h string, logger *log.Logger) {
-	dir := filepath.Join(INBOUND_DIR, h)
+func cleanup(receipt string, logger *log.Logger) {
+	dir := filepath.Join(INBOUND_DIR, receipt)
 	logger.Printf("Cleaning up %s", dir)
 
 	err := os.RemoveAll(dir)
